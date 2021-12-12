@@ -16,5 +16,5 @@ fi
 
 ./workspace/ninja/remove_warned.sh $(pwd)'/artifacts'
 #ninja -f $(pwd)'/artifacts/build.ninja' -t compdb > $(pwd)'/artifacts/compile_commands.json'
-samu -f $(pwd)'/artifacts/build.ninja' -j 6
+#samu -f $(pwd)'/artifacts/build.ninja' -j 6
 exit $?

@@ -21,7 +21,7 @@ m4_undefine(`__SUPPORT_SCRIPT')
 m4_include(helpers.m4)
 
 m4_define(__HASH, `m4_esyscmd(__SUPPORT_SCRIPT(hash) "$1")')
-m4_define(__CD_VERSION, `m4_esyscmd(__SUPPORT_SCRIPT(cd_version) $1)')
+m4_define(__C_VERSION, `m4_esyscmd(__SUPPORT_SCRIPT(c_version) $1)')
 m4_define(__BASE_PATH, `m4_esyscmd(dirname $1)')
 m4_define(__REVERSE, `m4_esyscmd(__SUPPORT_SCRIPT(reverse) $@)')
 m4_define(__REMOVE_WHITESPACE, `m4_esyscmd(__SUPPORT_SCRIPT(remove_whitespace) $1)')
@@ -124,7 +124,8 @@ builddir=__OUTPUT_DIR
 
 m4_include(__private/toolset.m4)
 
-m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') __LIBCPP_INC_DIRS __LIBC_INC_DIRS __TOOLSET_INC_DIRS)
+m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') __LIBC_INC_DIRS __TOOLSET_INC_DIRS)
+m4_define(`__CXX_CPP_FLAGS', m4_defn(`__CXX_CPP_FLAGS') __LIBCPP_INC_DIRS)
 
 m4_define(__NEED_USER_INCLUDE, `')
 
@@ -150,7 +151,8 @@ m4_ifdef(`__NEED_USER_INCLUDE', `
 
 m4_define(`__OPTIONAL_LIB_DIR', `m4_ifdef(`$1', `-L` '$1', `')')
 
-m4_define(`__LD_FLAGS', m4_defn(`__LD_FLAGS') -L`'__LIBC_LIB_DIR -L`'__LIBRT_LIB_DIR __OPTIONAL_LIB_DIR(`__LIBUNWIND_LIB_DIR') -L`'__LIBCPP_LIB_DIR -L`'__LIBCPP_ABI_LIB_DIR)
+m4_define(`__LD_FLAGS', m4_defn(`__LD_FLAGS') -L`'__LIBC_LIB_DIR -L`'__LIBRT_LIB_DIR)
+m4_define(`__CXX_LD_FLAGS', m4_defn(`__CXX_LD_FLAGS') __OPTIONAL_LIB_DIR(`__LIBUNWIND_LIB_DIR') -L`'__LIBCPP_LIB_DIR -L`'__LIBCPP_ABI_LIB_DIR)
 
 m4_define(__INTERNAL_LIBS, __LIBRT_LIB m4_defn(`__LIBUNWIND_LIB'))
 
@@ -185,8 +187,8 @@ m4_ifelse(m4_defn(`CCACHE'), ccache, `
 ')
 
 m4_define(__BASE_CPP_RULE, m4_defn(`__COLLECT_WARNED_EXEC'))
-m4_define(__BASE_CXX_RULE, m4_defn(`__CCACHE_ENVVARS') m4_defn(`__COLLECT_WARNED_EXEC') m4_defn(`__CCACHE_EXEC'))
-m4_define(__BASE_LD_RULE, m4_defn(`__COLLECT_WARNED_EXEC') __LD_EXEC __LD_FLAGS -o $out)
+m4_define(__BASE_C_RULE, m4_defn(`__CCACHE_ENVVARS') m4_defn(`__COLLECT_WARNED_EXEC') m4_defn(`__CCACHE_EXEC'))
+m4_define(__BASE_LD_RULE, m4_defn(`__COLLECT_WARNED_EXEC') __LD_EXEC m4_defn(`__LD_FLAGS') -o $out)
 
 m4_ifelse(TOOLSET, llvm, `
 	m4_define(`__GENERATED_CPP_FLAGS', m4_defn(`__GENERATED_CPP_FLAGS') -Wno-documentation-unknown-command)
@@ -200,13 +202,15 @@ m4_ifdef(`ZAPCC', `
 	m4_define(`__GENERATED_CXX_FLAGS', m4_defn(`__GENERATED_CXX_FLAGS') -Wno-suggest-destructor-override -Wno-extra-semi-stmt -Wno-suggest-override -Wno-implicit-int-conversion -Wno-deprecated-declarations)
 ')
 
-m4_define(__PP_CMD_BITS, m4_defn(`__CPP_FLAGS') m4_defn(`__CPP_CXX_FLAGS') $cppflags)
-m4_define(__CXX_CMD_BITS, m4_defn(`__CXX_FLAGS') m4_defn(`__CPP_CXX_FLAGS') $cxxflags)
+m4_define(__CXX_PP_CMD_BITS, m4_defn(`__CPP_FLAGS') m4_defn(`__CPP_C_FLAGS') m4_defn(`__CXX_CPP_FLAGS') m4_defn(`__CPP_CXX_FLAGS') $cppflags $cxx_cppflags)
+m4_define(__CC_PP_CMD_BITS, m4_defn(`__CPP_FLAGS') m4_defn(`__CPP_C_FLAGS') m4_defn(`__CC_CPP_FLAGS') m4_defn(`__CPP_CC_FLAGS') $cppflags $cc_cppflags)
+m4_define(__CXX_CMD_BITS, m4_defn(`__CXX_FLAGS') m4_defn(`__CPP_C_FLAGS') m4_defn(`__CPP_CXX_FLAGS') $cflags $cxxflags)
+m4_define(__CC_CMD_BITS, m4_defn(`__CC_FLAGS') m4_defn(`__CPP_C_FLAGS') m4_defn(`__CPP_CC_FLAGS') $cflags $ccflags)
 
 m4_ifdef(`__SEPARATE_AS', `
-	m4_define(__TMP_CXX_MODE, -S)
+	m4_define(__TMP_C_MODE, -S)
 ', `
-	m4_define(__TMP_CXX_MODE, -c)
+	m4_define(__TMP_C_MODE, -c)
 ')
 
 m4_ifelse(TOOLSET, llvm, `
@@ -219,62 +223,90 @@ m4_ifdef(`__SEPARATE_PP', `
 	m4_ifelse(TOOLSET, llvm, `
 		m4_divert(-1)
 		#m4_define(__TMP_LANG_CXX_PCH_PP, c++-header-cpp-output)
+		#m4_define(__TMP_LANG_CC_PCH_PP, c-header-cpp-output)
 		m4_divert
 		m4_define(__TMP_LANG_CXX_PCH_PP, c++-header)
+		m4_define(__TMP_LANG_CC_PCH_PP, c-header)
 		m4_define(__TMP_PP_ARG, --no-integrated-cpp)
 	', `
 		m4_define(__TMP_LANG_CXX_PCH_PP, c++-header)
+		m4_define(__TMP_LANG_CC_PCH_PP, c-header)
 		m4_define(__TMP_PP_ARG, -fpreprocessed -no-integrated-cpp)
 	')
 
 	m4_ifdef(`__PCH_NO_SEPARATE_PP', `
 		m4_define(__TMP_PCH_PP_ARG, `')
-		m4_define(__PCH_CXX_CMD_BITS, __PP_CMD_BITS -D__PCH__ __CXX_CMD_BITS)
+		m4_define(__PCH_CXX_CMD_BITS, __CXX_PP_CMD_BITS -D__PCH__ __CXX_CMD_BITS)
+		m4_define(__PCH_CC_CMD_BITS, __CC_PP_CMD_BITS -D__PCH__ __CC_CMD_BITS)
 	', `
 		m4_define(__TMP_PCH_PP_ARG, __TMP_PP_ARG)
 		m4_define(__PCH_CXX_CMD_BITS, __CXX_CMD_BITS)
-		m4_define(__PCH_PP_CMD_BITS, __PP_CMD_BITS -D__PCH__)
+		m4_define(__PCH_CC_CMD_BITS, __CC_CMD_BITS)
+		m4_define(__PCH_CXX_PP_CMD_BITS, __CXX_PP_CMD_BITS -D__PCH__)
+		m4_define(__PCH_CC_PP_CMD_BITS, __CC_PP_CMD_BITS -D__PCH__)
 	')
 
-	m4_ifdef(`__CPP_IS_CXX', `
-		m4_define(__TMP_CPP_EXEC, __CXX_EXEC)
+	m4_ifdef(`__CPP_IS_C', `
+		m4_define(__TMP_CXX_CPP_EXEC, __CXX_EXEC)
+		m4_define(__TMP_CC_CPP_EXEC, __CC_EXEC)
 		m4_define(__TMP_CPP_MODE, -E)
 	', `
-		m4_define(__TMP_CPP_EXEC, __CPP_EXEC)
+		m4_define(__TMP_CXX_CPP_EXEC, __CPP_EXEC)
+		m4_define(__TMP_CC_CPP_EXEC, __CPP_EXEC)
 		m4_define(__TMP_CPP_MODE, `')
 	')
 
-rule cpp
-__HACK_SPACE`'command=__BASE_CPP_RULE __TMP_CPP_EXEC __PP_CMD_BITS -MMD -x c++ __TMP_CPP_MODE $in -o $out
+rule cpp_cxx
+__HACK_SPACE`'command=__BASE_CPP_RULE __TMP_CXX_CPP_EXEC __CXX_PP_CMD_BITS -MMD -x c++ __TMP_CPP_MODE $in -o $out
+__HACK_SPACE`'deps=gcc
+rule cpp_cc
+__HACK_SPACE`'command=__BASE_CPP_RULE __TMP_CC_CPP_EXEC __CC_PP_CMD_BITS -MMD -x c __TMP_CPP_MODE $in -o $out
 __HACK_SPACE`'deps=gcc
 	m4_ifdef(`__PCH_NO_SEPARATE_PP', `', `
-rule cpp_pch
-__HACK_SPACE`'command=__BASE_CPP_RULE __TMP_CPP_EXEC __PCH_PP_CMD_BITS -x c++ __TMP_CPP_MODE $in -o $out
+rule cpp_pch_cxx
+__HACK_SPACE`'command=__BASE_CPP_RULE __TMP_CXX_CPP_EXEC __PCH_CXX_PP_CMD_BITS -x c++ __TMP_CPP_MODE $in -o $out
+rule cpp_pch_cc
+__HACK_SPACE`'command=__BASE_CPP_RULE __TMP_CC_CPP_EXEC __PCH_CC_PP_CMD_BITS -x c __TMP_CPP_MODE $in -o $out
 	')
 rule cxx
-__HACK_SPACE`'command=__BASE_CXX_RULE __CXX_EXEC __CXX_CMD_BITS __TMP_PP_ARG -x c++-cpp-output __TMP_CXX_MODE $in -o $out
+__HACK_SPACE`'command=__BASE_C_RULE __CXX_EXEC __CXX_CMD_BITS __TMP_PP_ARG -x c++-cpp-output __TMP_C_MODE $in -o $out
+rule cc
+__HACK_SPACE`'command=__BASE_C_RULE __CC_EXEC __CC_CMD_BITS __TMP_PP_ARG -x c-cpp-output __TMP_C_MODE $in -o $out
 rule cxx_pch
-__HACK_SPACE`'command=__BASE_CXX_RULE __CXX_EXEC __PCH_CXX_CMD_BITS __TMP_PCH_PP_ARG __TMP_PCH_ARG -x __TMP_LANG_CXX_PCH_PP $in -o $out
+__HACK_SPACE`'command=__BASE_C_RULE __CXX_EXEC __PCH_CXX_CMD_BITS __TMP_PCH_PP_ARG __TMP_PCH_ARG -x __TMP_LANG_CXX_PCH_PP $in -o $out
+rule cc_pch
+__HACK_SPACE`'command=__BASE_C_RULE __CC_EXEC __PCH_CC_CMD_BITS __TMP_PCH_PP_ARG __TMP_PCH_ARG -x __TMP_LANG_CC_PCH_PP $in -o $out
 
-	m4_undefine(`__PCH_PP_CMD_BITS')
+	m4_undefine(`__PCH_CXX_PP_CMD_BITS')
+	m4_undefine(`__PCH_CC_PP_CMD_BITS')
 	m4_undefine(`__PCH_CXX_CMD_BITS')
+	m4_undefine(`__PCH_CC_CMD_BITS')
 	m4_undefine(`__TMP_PCH_PP_ARG')
 	m4_undefine(`__TMP_PP_ARG')
 	m4_undefine(`__TMP_CPP_MODE')
 	m4_undefine(`__TMP_LANG_CXX_PCH_PP')
-	m4_undefine(`__TMP_CPP_EXEC')
+	m4_undefine(`__TMP_LANG_CC_PCH_PP')
+	m4_undefine(`__TMP_CXX_CPP_EXEC')
+	m4_undefine(`__TMP_CC_CPP_EXEC')
 ', `
 rule cxx
-__HACK_SPACE`'command=__BASE_CXX_RULE __CXX_EXEC __PP_CMD_BITS __CXX_CMD_BITS -MMD -x c++ __TMP_CXX_MODE $in -o $out
+__HACK_SPACE`'command=__BASE_C_RULE __CXX_EXEC __CXX_PP_CMD_BITS __CXX_CMD_BITS -MMD -x c++ __TMP_C_MODE $in -o $out
 __HACK_SPACE`'deps=gcc
 rule cxx_pch
-__HACK_SPACE`'command=__BASE_CXX_RULE __CXX_EXEC __PP_CMD_BITS -D__PCH__ __CXX_CMD_BITS __TMP_PCH_ARG -x c++-header $in -o $out
+__HACK_SPACE`'command=__BASE_C_RULE __CXX_EXEC __CXX_PP_CMD_BITS -D__PCH__ __CXX_CMD_BITS __TMP_PCH_ARG -x c++-header $in -o $out
+rule cc
+__HACK_SPACE`'command=__BASE_C_RULE __CC_EXEC __CC_PP_CMD_BITS __CC_CMD_BITS -MMD -x c __TMP_C_MODE $in -o $out
+__HACK_SPACE`'deps=gcc
+rule cc_pch
+__HACK_SPACE`'command=__BASE_C_RULE __CC_EXEC __CC_PP_CMD_BITS -D__PCH__ __CC_CMD_BITS __TMP_PCH_ARG -x c-header $in -o $out
 ')
 
 m4_undefine(`__TMP_PCH_ARG')
-m4_undefine(`__TMP_CXX_MODE')
-m4_undefine(`__PP_CMD_BITS')
+m4_undefine(`__TMP_C_MODE')
+m4_undefine(`__CXX_PP_CMD_BITS')
+m4_undefine(`__CC_PP_CMD_BITS')
 m4_undefine(`__CXX_CMD_BITS')
+m4_undefine(`__CC_CMD_BITS')
 
 rule ld_exec
 __HACK_SPACE`'command=__BASE_LD_RULE __LD_FLAGS_EXEC __LD_IN_FLAGS_EXEC($in)
@@ -283,34 +315,52 @@ __HACK_SPACE`'command=__BASE_LD_RULE __LD_FLAGS_LIB __LD_IN_FLAGS_LIB($in)
 rule symlink
 __HACK_SPACE`'command=ln -sfT $in $out
 
-m4_define(__CPP_UNIQUE_ID, TOOLSET`'m4_defn(`__TOOLSET_CPP_MOD')`|'ARCHITECTURE`|'CONFIGURATION`|'LIBC`'m4_defn(`__LIBC_MOD')`|'LIBCPP`'m4_defn(`__LIBCPP_MOD'))
-m4_define(__CPP_HASH, __HASH(__CPP_UNIQUE_ID))
+m4_define(__CC_CPP_UNIQUE_ID, TOOLSET`'m4_defn(`__TOOLSET_CPP_MOD')`|'ARCHITECTURE`|'CONFIGURATION`|'LIBC`'m4_defn(`__LIBC_MOD'))
+m4_define(__CC_CPP_HASH, __HASH(__CC_CPP_UNIQUE_ID))
+
+m4_define(__CXX_CPP_UNIQUE_ID, __CC_CPP_UNIQUE_ID`|'LIBCPP`'m4_defn(`__LIBCPP_MOD'))
+m4_define(__CXX_CPP_HASH, __HASH(__CXX_CPP_UNIQUE_ID))
 
 m4_ifdef(`__SEPARATE_AS', `
-	m4_define(__AS_UNIQUE_ID, __CPP_UNIQUE_ID`|'m4_defn(`__TOOLSET_AS_MOD'))
-	m4_define(__AS_HASH, __HASH(__AS_UNIQUE_ID))
+	m4_define(__CXX_AS_UNIQUE_ID, __CXX_CPP_UNIQUE_ID`|'m4_defn(`__TOOLSET_AS_MOD'))
+	m4_define(__CXX_AS_HASH, __HASH(__CXX_AS_UNIQUE_ID))
 
-	m4_define(__OBJ_UNIQUE_ID, __AS_UNIQUE_ID`|'m4_defn(`__TOOLSET_OBJ_MOD'))
+	m4_define(__CC_AS_UNIQUE_ID, __CC_CPP_UNIQUE_ID`|'m4_defn(`__TOOLSET_AS_MOD'))
+	m4_define(__CC_AS_HASH, __HASH(__CC_AS_UNIQUE_ID))
+
+	m4_define(__CXX_OBJ_UNIQUE_ID, __CXX_AS_UNIQUE_ID`|'m4_defn(`__TOOLSET_OBJ_MOD'))
+	m4_define(__CC_OBJ_UNIQUE_ID, __CC_AS_UNIQUE_ID`|'m4_defn(`__TOOLSET_OBJ_MOD'))
 ', `
-	m4_define(__OBJ_UNIQUE_ID, __CPP_UNIQUE_ID`|'m4_defn(`__TOOLSET_OBJ_MOD'))
+	m4_define(__CXX_OBJ_UNIQUE_ID, __CXX_CPP_UNIQUE_ID`|'m4_defn(`__TOOLSET_OBJ_MOD'))
+	m4_define(__CC_OBJ_UNIQUE_ID, __CC_CPP_UNIQUE_ID`|'m4_defn(`__TOOLSET_OBJ_MOD'))
 ')
 
-m4_define(__OBJ_HASH, __HASH(__OBJ_UNIQUE_ID))
+m4_define(__CXX_OBJ_HASH, __HASH(__CXX_OBJ_UNIQUE_ID))
+m4_define(__CC_OBJ_HASH, __HASH(__CC_OBJ_UNIQUE_ID))
 
-m4_define(__AR_UNIQUE_ID, __OBJ_UNIQUE_ID`|'m4_defn(`__TOOLSET_AR_MOD'))
-m4_define(__AR_HASH, __HASH(__AR_UNIQUE_ID))
+m4_define(__CXX_AR_UNIQUE_ID, __CXX_OBJ_UNIQUE_ID`|'m4_defn(`__TOOLSET_AR_MOD'))
+m4_define(__CXX_AR_HASH, __HASH(__CXX_AR_UNIQUE_ID))
 
-m4_define(__SO_UNIQUE_ID, __OBJ_UNIQUE_ID`|'LD)
+m4_define(__CC_AR_UNIQUE_ID, __CC_OBJ_UNIQUE_ID`|'m4_defn(`__TOOLSET_AR_MOD'))
+m4_define(__CC_AR_HASH, __HASH(__CC_AR_UNIQUE_ID))
+
+m4_define(__CXX_SO_UNIQUE_ID, __CXX_OBJ_UNIQUE_ID`|'LD)
+m4_define(__CC_SO_UNIQUE_ID, __CC_OBJ_UNIQUE_ID`|'LD)
 m4_ifdef(`LSB', `
-	m4_define(`__SO_UNIQUE_ID', __SO_UNIQUE_ID`~lsb')
+	m4_define(`__CXX_SO_UNIQUE_ID', __CXX_SO_UNIQUE_ID`~lsb')
+	m4_define(`__CC_SO_UNIQUE_ID', __CC_SO_UNIQUE_ID`~lsb')
 ')
-m4_define(`__SO_UNIQUE_ID', __SO_UNIQUE_ID`|'LIBCPP_ABI`|'LIBRT`|'LIBUNWIND)
-m4_define(__SO_HASH, __HASH(__SO_UNIQUE_ID))
+m4_define(`__CXX_SO_UNIQUE_ID', __CXX_SO_UNIQUE_ID`|'LIBCPP_ABI`|'LIBRT`|'LIBUNWIND)
+m4_define(__CXX_SO_HASH, __HASH(__CXX_SO_UNIQUE_ID))
+
+m4_define(__CC_SO_HASH, __HASH(__CC_SO_UNIQUE_ID))
 
 m4_define(__PROJECT_BUILDDIR, __BASE_PROJECT_BUILDDIR/$1)
 
-m4_define(__BASE_PP_RULE_BITS, `__HACK_SPACE`'cppflags=$cppflags m4_defn(__`'PROJECT`'_CPP_FLAGS) m4_defn(`__LIBRARY_CPP_FLAGS') m4_defn(__`'__SRC_FILE_HASH`'_CPP_FLAGS)')
+m4_define(__BASE_CXX_PP_RULE_BITS, `__HACK_SPACE`'cxx_cppflags=$cxx_cppflags m4_defn(__`'PROJECT`'_CPP_FLAGS) m4_defn(`__LIBRARY_CPP_FLAGS') m4_defn(__`'__SRC_FILE_HASH`'_CPP_FLAGS)')
+m4_define(__BASE_CC_PP_RULE_BITS, `__HACK_SPACE`'cc_cppflags=$cc_cppflags m4_defn(__`'PROJECT`'_CPP_FLAGS) m4_defn(`__LIBRARY_CPP_FLAGS') m4_defn(__`'__SRC_FILE_HASH`'_CPP_FLAGS)')
 m4_define(__BASE_CXX_RULE_BITS, `__HACK_SPACE`'cxxflags=$cxxflags m4_defn(__`'__SRC_FILE_HASH`'_CXX_FLAGS)')
+m4_define(__BASE_CC_RULE_BITS, `__HACK_SPACE`'ccflags=$ccflags m4_defn(__`'__SRC_FILE_HASH`'_CC_FLAGS)')
 
 m4_define(__LOOP_CXX_FILES, `
 	m4_undefine(`__TMP_OBJLIST')
@@ -322,29 +372,29 @@ m4_define(__LOOP_CXX_FILES, `
 	m4_syscmd(mkdir -p __TMP_BUILDDIR)
 
 	m4_ifdef(`__SEPARATE_PP', `', `
-		m4_syscmd(mkdir -p __TMP_BUILDDIR/__CPP_HASH)
+		m4_syscmd(mkdir -p __TMP_BUILDDIR/__CXX_CPP_HASH)
 	')
 
 	m4_syscmd(truncate -s 0 __TOOLSET_HASHES_PATH)
 
-	m4_syscmd(echo "__CPP_UNIQUE_ID = __CPP_HASH" >> __TOOLSET_HASHES_PATH)
+	m4_syscmd(echo "__CXX_CPP_UNIQUE_ID = __CXX_CPP_HASH" >> __TOOLSET_HASHES_PATH)
 	m4_ifdef(`__SEPARATE_AS', `
-		m4_syscmd(echo "__AS_UNIQUE_ID = __AS_HASH" >> __TOOLSET_HASHES_PATH)
+		m4_syscmd(echo "__CXX_AS_UNIQUE_ID = __CXX_AS_HASH" >> __TOOLSET_HASHES_PATH)
 	')
-	m4_syscmd(echo "__OBJ_UNIQUE_ID = __OBJ_HASH" >> __TOOLSET_HASHES_PATH)
-	m4_syscmd(echo "__AR_UNIQUE_ID = __AR_HASH" >> __TOOLSET_HASHES_PATH)
-	m4_syscmd(echo "__SO_UNIQUE_ID = __SO_HASH" >> __TOOLSET_HASHES_PATH)
+	m4_syscmd(echo "__CXX_OBJ_UNIQUE_ID = __CXX_OBJ_HASH" >> __TOOLSET_HASHES_PATH)
+	m4_syscmd(echo "__CXX_AR_UNIQUE_ID = __CXX_AR_HASH" >> __TOOLSET_HASHES_PATH)
+	m4_syscmd(echo "__CXX_SO_UNIQUE_ID = __CXX_SO_HASH" >> __TOOLSET_HASHES_PATH)
 
 	m4_syscmd(truncate -s 0 __FILE_HASHES_PATH)
 
 	FOREACH(`__FILES_IT', (m4_shift(m4_shift($@))), `
 		m4_define(`__SRC_FILE', ABSOLUTE_PATH(__FILES_IT, m, false))
 		m4_define(`__SRC_FILE_HASH', __HASH(__SRC_FILE))
-		m4_define(`__TMP_CPP_FILENAME', __TMP_BUILDDIR/__CPP_HASH/__SRC_FILE_HASH)
+		m4_define(`__TMP_CPP_FILENAME', __TMP_BUILDDIR/__CXX_CPP_HASH/__SRC_FILE_HASH)
 		m4_ifdef(`__SEPARATE_AS', `
-			m4_define(`__TMP_AS_FILENAME', __TMP_BUILDDIR/__AS_HASH/__SRC_FILE_HASH)
+			m4_define(`__TMP_AS_FILENAME', __TMP_BUILDDIR/__CXX_AS_HASH/__SRC_FILE_HASH)
 		')
-		m4_define(`__TMP_OBJ_FILENAME', __TMP_BUILDDIR/__OBJ_HASH/__SRC_FILE_HASH)
+		m4_define(`__TMP_OBJ_FILENAME', __TMP_BUILDDIR/__CXX_OBJ_HASH/__SRC_FILE_HASH)
 
 		m4_syscmd(echo "__SRC_FILE = __SRC_FILE_HASH" >> __FILE_HASHES_PATH)
 
@@ -364,10 +414,10 @@ m4_define(__LOOP_CXX_FILES, `
 
 		m4_define(`__CXX_DEPS', __DEPS)
 		m4_define(`__CXX_DEPFILE', __HACK_SPACE`'depfile=__TMP_CPP_FILENAME.d)
-		m4_define(`__CXX_CPPFLAGS', __BASE_PP_RULE_BITS -MQ __CXX_SRC_FILE -MF __TMP_CPP_FILENAME.d)
+		m4_define(`__CXX_CPPFLAGS', __BASE_CXX_PP_RULE_BITS -MQ __CXX_SRC_FILE -MF __TMP_CPP_FILENAME.d)
 
 		m4_ifdef(`__SEPARATE_PP', `
-build __CXX_SRC_FILE: cpp __SRC_FILE __CXX_DEPS
+build __CXX_SRC_FILE: cpp_cxx __SRC_FILE __CXX_DEPS
 __CXX_CPPFLAGS
 __CXX_DEPFILE
 m4_indir(`__COLLECT_WARNINGS_FILE__')
@@ -412,12 +462,12 @@ m4_ifdef(`__SO_EXT', `', `
 	m4_define(`__SO_EXT', so)
 ')
 
-m4_define(LIB_PATH, `m4_ifelse($1, static_library, `__THIS_PROJECT_BUILDDIR/$1/$2/__AR_HASH/$2.__AR_EXT', `__THIS_PROJECT_BUILDDIR/$1/$2/__SO_HASH/$2.__SO_EXT')')
+m4_define(CXX_LIB_PATH, `m4_ifelse($1, static_library, `__THIS_PROJECT_BUILDDIR/$1/$2/__CXX_AR_HASH/$2.__AR_EXT', `__THIS_PROJECT_BUILDDIR/$1/$2/__CXX_SO_HASH/$2.__SO_EXT')')
 
 m4_define(STATIC_LIBRARY, `
 	__LOOP_CXX_FILES($1, static_library, m4_shift($@))
 
-	m4_define(`__TMP_LIBRARY_PATH', __TMP_BUILDDIR/__AR_HASH)
+	m4_define(`__TMP_LIBRARY_PATH', __TMP_BUILDDIR/__CXX_AR_HASH)
 
 	m4_define(__`'PROJECT`'_static_library_$1_PATH, __TMP_LIBRARY_PATH)
 
@@ -449,7 +499,7 @@ m4_define(SHARED_LIBRARY, `
 	m4_ifdef(`LIBRARY_PATH', `
 		m4_define(`__TMP_LIBRARY_PATH', ABSOLUTE_PATH(LIBRARY_PATH, m, true))
 	', `
-		m4_define(`__TMP_LIBRARY_PATH', __TMP_BUILDDIR/__SO_HASH)
+		m4_define(`__TMP_LIBRARY_PATH', __TMP_BUILDDIR/__CXX_SO_HASH)
 	')
 
 	m4_define(__`'PROJECT`'_shared_library_$1_PATH, __TMP_LIBRARY_PATH)
@@ -460,7 +510,7 @@ m4_indir(`__COLLECT_WARNINGS_FILE__')
 __HACK_SPACE`'description=`LD' $1
 
 m4_ifdef(`LIBRARY_PATH', `
-build __TMP_BUILDDIR/__SO_HASH/$1.__SO_EXT: symlink __TMP_LIBRARY_PATH/$1.__SO_EXT
+build __TMP_BUILDDIR/__CXX_SO_HASH/$1.__SO_EXT: symlink __TMP_LIBRARY_PATH/$1.__SO_EXT
 __HACK_SPACE`'description=LN $1
 ')
 
@@ -478,7 +528,7 @@ m4_define(EXECUTABLE, `
 	m4_ifdef(`LIBRARY_PATH', `
 		m4_define(`__TMP_LIBRARY_PATH', ABSOLUTE_PATH(LIBRARY_PATH, m, true))
 	', `
-		m4_define(`__TMP_LIBRARY_PATH', __TMP_BUILDDIR/__SO_HASH)
+		m4_define(`__TMP_LIBRARY_PATH', __TMP_BUILDDIR/__CXX_SO_HASH)
 	')
 
 	m4_ifdef(`EMSCRIPTEN', `
@@ -518,14 +568,14 @@ m4_ifdef(`PCH_IS_SUPPORTED', `
 
 		m4_syscmd(truncate -s 0 __TOOLSET_HASHES_PATH)
 
-		m4_syscmd(echo "__CPP_UNIQUE_ID = __CPP_HASH" >> __TOOLSET_HASHES_PATH)
+		m4_syscmd(echo "__CXX_CPP_UNIQUE_ID = __CXX_CPP_HASH" >> __TOOLSET_HASHES_PATH)
 
 		m4_syscmd(truncate -s 0 __FILE_HASHES_PATH)
 
 		FOREACH(`__FILES_IT', (m4_shift($@)), `
 			m4_define(`__SRC_FILE', ABSOLUTE_PATH(__FILES_IT, m, false))
 			m4_define(`__SRC_FILE_HASH', __HASH(__SRC_FILE))
-			m4_define(`__TMP_CPP_FILENAME', __TMP_BUILDDIR/__CPP_HASH/__SRC_FILE_HASH)
+			m4_define(`__TMP_CPP_FILENAME', __TMP_BUILDDIR/__CXX_CPP_HASH/__SRC_FILE_HASH)
 
 			m4_syscmd(echo "__SRC_FILE = __SRC_FILE_HASH" >> __FILE_HASHES_PATH)
 
@@ -548,10 +598,10 @@ m4_ifdef(`PCH_IS_SUPPORTED', `
 			')
 
 			m4_define(`__CXX_DEPS', __DEPS)
-			m4_define(`__CXX_CPPFLAGS', __BASE_PP_RULE_BITS)
+			m4_define(`__CXX_CPPFLAGS', __BASE_CXX_PP_RULE_BITS)
 
 			m4_ifdef(`__PCH_SEPARATE_PP', `
-build __CXX_SRC_FILE: cpp_pch __SRC_FILE __CXX_DEPS
+build __CXX_SRC_FILE: cpp_pch_cxx __SRC_FILE __CXX_DEPS
 __CXX_CPPFLAGS
 m4_indir(`__COLLECT_WARNINGS_FILE__')
 __HACK_SPACE`'description=CPP __SRC_FILE

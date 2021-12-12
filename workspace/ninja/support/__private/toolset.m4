@@ -26,9 +26,10 @@ m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -std=gnu++`'__CXX_LATEST_VER)
 m4_define(`__CC_FLAGS', m4_defn(`__CC_FLAGS') -std=gnu`'__CC_LATEST_VER)
 
 m4_define(`__CXX_CPP_FLAGS', m4_defn(`__CXX_CPP_FLAGS') -std=gnu++`'__CXX_CPP_LATEST_VER)
-m4_define(`__CC_CPP_FLAGS', m4_defn(`__CC_CPP_FLAGS') -std=gnu++`'__CC_CPP_LATEST_VER)
+m4_define(`__CC_CPP_FLAGS', m4_defn(`__CC_CPP_FLAGS') -std=gnu`'__CC_CPP_LATEST_VER)
 
 m4_undefine(`__CXX_LATEST_VER')
+m4_undefine(`__CC_LATEST_VER')
 m4_undefine(`__CXX_CPP_LATEST_VER')
 m4_undefine(`__CC_CPP_LATEST_VER')
 
@@ -44,7 +45,7 @@ m4_ifelse(TOOLSET, llvm, `
 		m4_define(__CC_EXEC, zapcc)
 
 		m4_ifelse(ARCHITECTURE, x86-64, `
-			m4_define(__TOOLSET_INC_DIRS, -isystem /usr/lib/zapcc/__CXX_VERSION(zapcc)/include)
+			m4_define(__TOOLSET_INC_DIRS, -isystem /usr/lib/zapcc/__C_VERSION(zapcc)/include)
 		')
 
 		m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') -D__ZAPCC__)
@@ -63,7 +64,7 @@ m4_ifelse(TOOLSET, llvm, `
 			m4_define(`__CC_LD_FLAGS', m4_defn(`__CC_LD_FLAGS') -s DEFAULT_TO_CXX=0)
 		')
 
-		m4_define(__TOOLSET_INC_DIRS, -isystem EMSCRIPTEN_LLVM_ROOT/lib/clang/__CXX_VERSION(emscripten-clang)/include)
+		m4_define(__TOOLSET_INC_DIRS, -isystem EMSCRIPTEN_LLVM_ROOT/lib/clang/__C_VERSION(emscripten-clang)/include)
 
 		m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') -D__EMSCRIPTEN__)
 	')
@@ -72,29 +73,31 @@ m4_ifelse(TOOLSET, llvm, `
 		m4_ifelse(LIBC, musl, `
 			m4_divert(-1)
 			#m4_define(__CXX_EXEC, musl-clang)
-			#m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -Wno-unused-command-line-argument -Wno-poison-system-directories)
+			#m4_define(__CC_EXEC, musl-clang)
+			#m4_define(`__C_FLAGS', m4_defn(`__C_FLAGS') -Wno-unused-command-line-argument -Wno-poison-system-directories)
 			m4_divert
 			m4_define(__CXX_EXEC, clang++)
+			m4_define(__CC_EXEC, clang)
 		', `
 			m4_define(__CXX_EXEC, clang++)
-			m4_define(__CC_EXEC, clang++)
+			m4_define(__CC_EXEC, clang)
 		')
 
 		m4_ifelse(ARCHITECTURE, x86-64, `
-			m4_define(__TOOLSET_INC_DIRS, -isystem /usr/lib/clang/__CXX_VERSION(clang)/include)
+			m4_define(__TOOLSET_INC_DIRS, -isystem /usr/lib/clang/__C_VERSION(clang)/include)
 		')
 	')
 
 	m4_ifdef(`ZAPCC', `', `
-		m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -fintegrated-cc1)
+		m4_define(`__C_FLAGS', m4_defn(`__C_FLAGS') -fintegrated-cc1)
 	')
 
 	m4_include(__private/sanity|llvm.m4)
 
 	m4_ifdef(`__SEPARATE_AS', `
-		m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -fno-integrated-as)
+		m4_define(`__C_FLAGS', m4_defn(`__C_FLAGS') -fno-integrated-as)
 	', `
-		m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -fintegrated-as)
+		m4_define(`__C_FLAGS', m4_defn(`__C_FLAGS') -fintegrated-as)
 	')
 
 	m4_divert(-1)
@@ -165,14 +168,14 @@ m4_ifelse(TOOLSET, gnu, `
 
 	m4_ifdef(`MINGW', `
 		m4_ifelse(ARCHITECTURE, x86-64, `
-			m4_define(__MINGW_VER, __CXX_VERSION(mingw-64))
+			m4_define(__MINGW_VER, __C_VERSION(mingw-64))
 
 			m4_define(__TOOLSET_INC_DIRS, -isystem /usr/lib/gcc/__MINGW_PREFIX/__MINGW_VER/include -isystem /usr/lib/gcc/__MINGW_PREFIX/__MINGW_VER/include-fixed)
 		')
 
 		m4_undefine(`__MINGW_VER')
 	', `
-		m4_define(__GCC_VER, __CXX_VERSION(gcc))
+		m4_define(__GCC_VER, __C_VERSION(gcc))
 
 		m4_ifelse(ARCHITECTURE, x86-64, `
 			m4_define(__TOOLSET_INC_DIRS, -isystem /usr/lib/gcc/x86_64-pc-linux-gnu/__GCC_VER/include -isystem /usr/lib/gcc/x86_64-pc-linux-gnu/__GCC_VER/include-fixed)
@@ -184,16 +187,21 @@ m4_ifelse(TOOLSET, gnu, `
 	m4_ifelse(LIBC, musl, `
 		m4_divert(-1)
 		#m4_define(__CXX_EXEC, musl-gcc)
+		#m4_define(__CC_EXEC, musl-gcc)
 		m4_divert
 		m4_define(__CXX_EXEC, g++)
+		m4_define(__CC_EXEC, gcc)
 	', `
 		m4_ifdef(`MINGW', `
 			m4_define(__CXX_EXEC, __MINGW_PREFIX-g++)
+			m4_define(__CC_EXEC, __MINGW_PREFIX-gcc)
 		', `
 			m4_ifdef(`WINE', `
 				m4_define(__CXX_EXEC, wineg++)
+				m4_define(__CC_EXEC, winegcc)
 			', `
 				m4_define(__CXX_EXEC, g++)
+				m4_define(__CC_EXEC, gcc)
 			')
 		')
 	')

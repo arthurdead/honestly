@@ -5,3 +5,4 @@ thirdparty/zsh/git/
 test/bin/
 test/*.elf
 test/*.log
+workspace/sublime-text/*.sublime-workspace

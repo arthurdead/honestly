@@ -33,7 +33,7 @@ m4_ifelse(LIBCPP, libstdc++, `
 
 	m4_ifdef(`MINGW', `
 		m4_ifelse(ARCHITECTURE, x86-64, `
-			m4_define(__MINGW_VER, __CXX_VERSION(mingw-64))
+			m4_define(__MINGW_VER, __C_VERSION(mingw-64))
 		')
 
 		m4_define(__LIBCPP_INC_DIRS, __LIBCPP_INC_ARG /usr/__MINGW_PREFIX/include/c++/__MINGW_VER)
@@ -44,7 +44,7 @@ m4_ifelse(LIBCPP, libstdc++, `
 
 		m4_undefine(`__MINGW_VER')
 	', `
-		m4_define(__GCC_VER, __CXX_VERSION(gcc))
+		m4_define(__GCC_VER, __C_VERSION(gcc))
 
 		m4_define(__LIBCPP_INC_DIRS, __LIBCPP_INC_ARG /usr/include/c++/__GCC_VER)
 

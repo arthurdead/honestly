@@ -119,7 +119,7 @@ m4_ifdef(`WINE', `
 
 m4_divert(-1)
 #m4_ifdef(`ZAPCC', `
-#	m4_define(__CPP_IS_CXX, `')
+#	m4_define(__CPP_IS_C, `')
 #')
 m4_divert
 
