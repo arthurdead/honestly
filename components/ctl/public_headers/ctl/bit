@@ -1,0 +1,13 @@
+#pragma once
+
+#include "version"
+
+#if CTL_LIBCPP == CTL_LIBCPP_GLIBCXX && \
+	CTL_COMPILER & CTL_COMPILER_FLAG_ZAPCC
+	#define __builtin_bit_cast(T, F) (*reinterpret_cast<T *>(&F))
+#endif
+#include <bit>
+#if CTL_LIBCPP == CTL_LIBCPP_GLIBCXX && \
+	CTL_COMPILER & CTL_COMPILER_FLAG_ZAPCC
+	#undef __builtin_bit_cast
+#endif

@@ -1,0 +1,110 @@
+#pragma once
+
+#include "version"
+#include "functional"
+#include <optional>
+
+namespace ctl
+{
+	namespace __opt
+	{
+		template <typename T>
+		class CTL_LOCAL_CLASS optional_reference : private std::optional<reference_wrapper<T>>
+		{
+			using __base = std::optional<reference_wrapper<T>>;
+
+		public:
+			using type = T;
+
+			constexpr optional_reference() = default;
+			constexpr optional_reference(optional_reference &&) = default;
+			constexpr optional_reference(const optional_reference &) = default;
+			constexpr optional_reference &operator=(optional_reference &&) = default;
+			constexpr optional_reference &operator=(const optional_reference &) = default;
+
+			constexpr inline optional_reference(std::nullopt_t)
+				: __base{std::nullopt} {}
+			constexpr inline optional_reference &operator=(std::nullopt_t)
+			{ __base::operator=(std::nullopt); return *this; }
+
+			constexpr inline optional_reference(T &value)
+				: __base{reference_wrapper<T>{value}} {}
+			constexpr inline optional_reference &operator=(T &value)
+			{ __base::operator=(reference_wrapper<T>{value}); return *this; }
+
+			using __base::has_value;
+			using __base::operator bool;
+
+			constexpr inline const T *operator->() const
+			{ return &__base::value().get(); }
+			constexpr inline T *operator->()
+			{ return &__base::value().get(); }
+
+			constexpr inline const T &operator*() const &
+			{ return __base::value().get(); }
+			constexpr inline T &operator*() &
+			{ return __base::value().get(); }
+
+			constexpr inline const T &&operator*() const &&
+			{ return std::move(__base::value().get()); }
+			constexpr inline T &&operator*() &&
+			{ return std::move(__base::value().get()); }
+
+			constexpr inline T &value() &
+			{ return __base::value().get(); }
+			constexpr inline const T& value() const &
+			{ return __base::value().get(); }
+
+			constexpr inline T &&value() &&
+			{ return std::move(__base::value().get()); }
+			constexpr inline const T &&value() const &&
+			{ return std::move(__base::value().get()); }
+		};
+	}
+
+	template <typename T>
+	class CTL_LOCAL_CLASS optional_reference : public __opt::optional_reference<T>
+	{
+		using __base = __opt::optional_reference<T>;
+
+	public:
+		using __opt::optional_reference<T>::optional_reference;
+		using __base::operator=;
+
+		constexpr optional_reference(optional_reference<const T> &&other) = delete;
+		constexpr optional_reference(const optional_reference<const T> &other) = delete;
+		constexpr optional_reference &operator=(optional_reference<const T> &&other) = delete;
+		constexpr optional_reference &operator=(const optional_reference<const T> &other) = delete;
+	};
+
+	template <typename T>
+	class CTL_LOCAL_CLASS optional_reference<const T> : public __opt::optional_reference<const T>
+	{
+		using __base = __opt::optional_reference<const T>;
+
+	public:
+		using __opt::optional_reference<const T>::optional_reference;
+		using __base::operator=;
+
+		constexpr inline optional_reference(optional_reference<T> &&other)
+			: optional_reference{std::move(type_cast<optional_reference<const T>>(other))} {}
+		constexpr inline optional_reference(const optional_reference<T> &other)
+			: optional_reference{type_cast<optional_reference<const T>>(other)} {}
+		constexpr inline optional_reference &operator=(optional_reference<T> &&other)
+		{ operator=(std::move(type_cast<optional_reference<const T>>(other))); return *this; }
+		constexpr inline optional_reference &operator=(const optional_reference<T> &other)
+		{ operator=(type_cast<optional_reference<const T>>(other)); return *this; }
+	};
+
+	template <typename T>
+	using optional_ref = optional_reference<T>;
+	template <typename T>
+	using optional_cref = optional_reference<const T>;
+
+	template <typename T>
+	constexpr inline optional_reference<T> make_optional_ref(T &value)
+	{ return optional_reference<T>{value}; }
+	template <typename T>
+	constexpr inline optional_reference<const T> make_optional_cref(const T &value)
+	{ return optional_reference<const T>{value}; }
+}

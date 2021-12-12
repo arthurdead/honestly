@@ -1,0 +1,54 @@
+#pragma once
+
+#include "version"
+#include "__private/type_traits.hpp"
+#include "string"
+
+#if CTL_LIBCPP == CTL_LIBCPP_GLIBCXX && \
+	CTL_COMPILER & CTL_COMPILER_FLAG_ZAPCC
+namespace std
+{
+	constexpr bool is_constant_evaluated() noexcept
+	{ return false; }
+}
+#endif
+
+namespace ctl
+{
+	template <typename T>
+	struct is_string : std::bool_constant<false>
+	{
+	};
+
+	template <typename C>
+	struct is_string<std::basic_string<C>> : std::bool_constant<true>
+	{
+	};
+#if 1
+	template <>
+	struct is_string<std::string> : std::bool_constant<true>
+	{
+	};
+	#ifdef __cpp_char8_t
+	template <>
+	struct is_string<std::u8string> : std::bool_constant<true>
+	{
+	};
+	#endif
+	template <>
+	struct is_string<std::u16string> : std::bool_constant<true>
+	{
+	};
+	template <>
+	struct is_string<std::u32string> : std::bool_constant<true>
+	{
+	};
+	template <>
+	struct is_string<std::wstring> : std::bool_constant<true>
+	{
+	};
+#endif
+
+	template <typename T>
+	constexpr inline bool is_string_v{is_string<T>::value};
+}

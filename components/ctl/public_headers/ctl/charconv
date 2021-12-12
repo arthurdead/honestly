@@ -1,0 +1,320 @@
+#pragma once
+
+#include "version"
+//#include "variant"
+#include "type_traits"
+#include "string"
+#include "string_view"
+#include "bit"
+#include <charconv>
+#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	#include <cuchar>
+#endif
+#include <system_error>
+
+#include "__private/api.hpp"
+
+#if CTL_COMPILER & CTL_COMPILER_FLAG_GCC
+	#define __CTL_WCHAR_WIDTH __WCHAR_WIDTH__
+#else
+	#error
+#endif
+
+namespace ctl
+{
+	class CTL_LOCAL_CLASS literal_variant;
+
+	std::string to_string(const literal_variant &value) = delete;
+
+	namespace __chrconv
+	{
+		template <typename T, typename F>
+		static T to_ustring(std::string_view value, F func) noexcept
+		{
+			T tmp;
+			std::string_view::const_iterator it{value.cbegin()};
+			std::string_view::const_iterator end{value.cend()};
+			while(it != end) {
+				const char c{*it};
+				typename T::value_type cstr{};
+				std::mbstate_t state{};
+				std::size_t res{};
+				while((res = func(&cstr, &c, MB_CUR_MAX, &state)) == static_cast<std::size_t>(-2));
+				if(res == 0 || res == static_cast<std::size_t>(-1)) {
+					break;
+				}
+				it += res;
+				tmp += cstr;
+			}
+			return tmp;
+		}
+
+		template <typename T, typename F>
+		static std::string to_mbstring(T value, F func) noexcept
+		{
+			std::string tmp;
+			typename T::const_iterator it{value.cbegin()};
+			typename T::const_iterator end{value.cend()};
+			while(it != end) {
+				const typename T::value_type c{*it};
+				std::string cstr;
+				cstr.resize(MB_CUR_MAX);
+				std::mbstate_t state{};
+				std::size_t res{};
+				while((res = func(cstr.data(), c, &state)) == 0);
+				tmp.shrink_to_fit();
+				if(res == static_cast<std::size_t>(-1)) {
+					break;
+				}
+				it += res;
+				tmp += std::move(cstr);
+			}
+			return tmp;
+		}
+
+		template <typename T, typename F>
+		static std::string to_mbchar(T value, F func) noexcept
+		{
+			std::string tmp;
+			tmp.resize(MB_CUR_MAX);
+			std::mbstate_t state{};
+			func(tmp.data(), value, &state);
+			tmp.shrink_to_fit();
+			return tmp;
+		}
+
+		template <typename T, typename F>
+		static T to_uchar(std::string_view value, F func) noexcept
+		{
+			T tmp{};
+			std::mbstate_t state{};
+			std::size_t res{};
+			do {
+				res = func(&tmp, value.data(), value.length()+1, &state);
+			} while(res == static_cast<std::size_t>(-2) || res == static_cast<std::size_t>(-3));
+			return tmp;
+		}
+	}
+
+	template <typename T>
+	T to_string(std::string_view value) noexcept = delete;
+
+	template <typename T>
+	T to_char(std::string_view value) noexcept = delete;
+
+#ifdef __cpp_char8_t
+	template <>
+	char8_t to_char<char8_t>(std::string_view value) noexcept = delete;
+	extern CTL_SHARED_API std::u8string CTL_SHARED_API_CALL to_u8char(std::string_view value) noexcept;
+#endif
+#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	template <>
+	inline char16_t to_char<char16_t>(std::string_view value) noexcept
+	{ return __chrconv::to_uchar<char16_t>(value, std::mbrtoc16); }
+	template <>
+	inline char32_t to_char<char32_t>(std::string_view value) noexcept
+	{ return __chrconv::to_uchar<char32_t>(value, std::mbrtoc32); }
+#else
+	template <>
+	CTL_SHARED_API char16_t CTL_SHARED_API_CALL to_char<char16_t>(std::string_view value) noexcept;
+	template <>
+	CTL_SHARED_API char32_t CTL_SHARED_API_CALL to_char<char32_t>(std::string_view value) noexcept;
+#endif
+	template <>
+	inline wchar_t to_char<wchar_t>(std::string_view value) noexcept
+	{ return __chrconv::to_uchar<wchar_t>(value, std::mbrtowc); }
+
+#ifdef __cpp_char8_t
+	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_char(std::u8string_view value) noexcept;
+#endif
+#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	inline std::string to_char(char16_t value) noexcept
+	{ return __chrconv::to_mbchar(value, std::c16rtomb); }
+	inline std::string to_char(char32_t value) noexcept
+	{ return __chrconv::to_mbchar(value, std::c32rtomb); }
+#else
+	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_char(char16_t value) noexcept;
+	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_char(char32_t value) noexcept;
+#endif
+	inline std::string to_char(wchar_t value) noexcept
+	{ return __chrconv::to_mbchar(value, std::wcrtomb); }
+
+#ifdef __cpp_char8_t
+	template <>
+	CTL_SHARED_API std::u8string CTL_SHARED_API_CALL to_string<std::u8string>(std::string_view value) noexcept;
+#endif
+#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	template <>
+	inline std::u16string to_string<std::u16string>(std::string_view value) noexcept
+	{ return __chrconv::to_ustring<std::u16string>(value, std::mbrtoc16); }
+	template <>
+	inline std::u32string to_string<std::u32string>(std::string_view value) noexcept
+	{ return __chrconv::to_ustring<std::u32string>(value, std::mbrtoc32); }
+#else
+	template <>
+	CTL_SHARED_API std::u16string CTL_SHARED_API_CALL to_string<std::u16string>(std::string_view value) noexcept;
+	template <>
+	CTL_SHARED_API std::u32string CTL_SHARED_API_CALL to_string<std::u32string>(std::string_view value) noexcept;
+#endif
+	template <>
+	CTL_SHARED_API std::wstring CTL_SHARED_API_CALL to_string<std::wstring>(std::string_view value) noexcept;
+
+#ifdef __cpp_char8_t
+	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_string(std::u8string_view value) noexcept;
+#endif
+#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	inline std::string to_string(std::u16string_view value) noexcept
+	{ return __chrconv::to_mbstring(value, std::c16rtomb); }
+	inline std::string to_string(std::u32string_view value) noexcept
+	{ return __chrconv::to_mbstring(value, std::c32rtomb); }
+#else
+	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_string(std::u16string_view value) noexcept;
+	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_string(std::u32string_view value) noexcept;
+#endif
+	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_string(std::wstring_view value) noexcept;
+
+#ifdef __cpp_char8_t
+	inline std::string to_string(const std::u8string &value) noexcept
+	{ return to_string(static_cast<std::u8string_view>(value)); }
+#endif
+	inline std::string to_string(const std::u16string &value) noexcept
+	{ return to_string(static_cast<std::u16string_view>(value)); }
+	inline std::string to_string(const std::u32string &value) noexcept
+	{ return to_string(static_cast<std::u32string_view>(value)); }
+	inline std::string to_string(const std::wstring &value) noexcept
+	{ return to_string(static_cast<std::wstring_view>(value)); }
+
+	namespace __chrconv
+	{
+		template <typename T, typename ...Args>
+		static std::errc from_chars(std::string_view str, T &tmp, Args && ...args) noexcept
+		{
+			const char *begin{str.data()};
+			const char *end{str.data()+str.length()};
+			std::from_chars_result res{std::from_chars(begin, end, tmp, std::forward<Args>(args)...)};
+			return res.ec;
+		}
+
+		template <typename T, typename ...Args>
+		static std::string to_chars_impl(T value, Args && ...args) noexcept
+		{
+			std::string tmp;
+			std::size_t len{1};
+			tmp.resize(len);
+			char *begin{const_cast<char *>(tmp.data())};
+			char *end{begin+len};
+			std::to_chars_result res;
+			while(true) {
+				res = std::to_chars(begin, end, value, std::forward<Args>(args)...);
+				if(res.ec == std::errc::value_too_large) {
+					tmp.resize(++len);
+					end = (const_cast<char *>(tmp.data())+len);
+				} else if(res.ec == std::errc{}) {
+					break;
+				} else {
+					CTL_DEBUGTRAP;
+					break;
+				}
+			}
+			return tmp;
+		}
+
+	#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
+		template <typename T>
+		static std::string to_chars_flt_printf(T value) noexcept
+		{
+			std::string tmp;
+			if constexpr(std::is_same_v<T, float>) {
+				int ret{std::snprintf(nullptr, 0, "%f", static_cast<double>(value))+1};
+				tmp.resize(static_cast<std::size_t>(ret));
+				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), "%f", static_cast<double>(value));
+			} else if constexpr(std::is_same_v<T, double>) {
+				int ret{std::snprintf(nullptr, 0, "%f", value)+1};
+				tmp.resize(static_cast<std::size_t>(ret));
+				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), "%f", value);
+			} else if constexpr(std::is_same_v<T, long double>) {
+				int ret{std::snprintf(nullptr, 0, "%Lf", value)+1};
+				tmp.resize(static_cast<std::size_t>(ret));
+				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), "%Lf", value);
+			} else {
+				CTL_DEBUGTRAP;
+			}
+			return tmp;
+		}
+
+		template <typename T, typename F>
+		static std::errc from_chars_flt_strto(std::string_view str, T &tmp, F &&func) noexcept
+		{
+			char *end{nullptr};
+			tmp = func(str.data(), &end);
+			return std::errc{};
+		}
+
+		static inline std::errc from_chars_flt_strto(std::string_view str, float &tmp) noexcept
+		{ return from_chars_flt_strto(str, tmp, std::strtof); }
+		static inline std::errc from_chars_flt_strto(std::string_view str, double &tmp) noexcept
+		{ return from_chars_flt_strto(str, tmp, std::strtod); }
+		static inline std::errc from_chars_flt_strto(std::string_view str, long double &tmp) noexcept
+		{ return from_chars_flt_strto(str, tmp, std::strtold); }
+	#endif
+
+		template <typename T, typename ...Args>
+		static inline std::string to_chars(T value) noexcept
+		{
+		#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
+			if constexpr(std::is_floating_point_v<T>) {
+				return to_chars_flt_printf(value);
+			} else {
+		#endif
+				return to_chars_impl<T>(value);
+		#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
+			}
+		#endif
+		}
+	}
+
+	std::string to_string(bool value, int = 10) noexcept = delete;
+	template <typename T>
+	inline std::string to_string(T value) noexcept
+	{ return __chrconv::to_chars(value); }
+	template <typename T>
+	inline std::string to_string(T value, int base) noexcept
+	{ return __chrconv::to_chars(value, base); }
+#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	template <typename T>
+	inline std::string to_string(T value, std::chars_format fmt) noexcept
+	{ return __chrconv::to_chars(value, fmt); }
+	template <typename T>
+	inline std::string to_string(T value, std::chars_format fmt, int precision) noexcept
+	{ return __chrconv::to_chars(value, fmt, precision); }
+#else
+	template <typename T>
+	inline std::string to_string(T value, [[maybe_unused]] std::chars_format fmt) noexcept
+	{ return __chrconv::to_chars_flt_printf(value); }
+	template <typename T>
+	inline std::string to_string(T value, [[maybe_unused]] std::chars_format fmt, [[maybe_unused]] int precision) noexcept
+	{ return __chrconv::to_chars_flt_printf(value); }
+#endif
+
+	template <typename T = int>
+	T to_integer(std::string_view str, int base = 10) noexcept;
+
+	template <typename T = int>
+	T to_integer(std::string_view str, std::error_code &ec, int base = 10) noexcept;
+
+#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	template <typename T = float>
+	T to_floating(std::string_view str, std::chars_format fmt = std::chars_format::general) noexcept;
+
+	template <typename T = float>
+	T to_floating(std::string_view str, std::error_code &ec, std::chars_format fmt = std::chars_format::general) noexcept;
+#else
+	template <typename T = float>
+	T to_floating(std::string_view str, [[maybe_unused]] std::chars_format fmt = std::chars_format::general) noexcept;
+
+	template <typename T = float>
+	T to_floating(std::string_view str, [[maybe_unused]] std::error_code &ec, [[maybe_unused]] std::chars_format fmt = std::chars_format::general) noexcept;
+#endif
+}
+
+#include "__private/charconv.tpp"

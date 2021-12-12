@@ -1,0 +1,47 @@
+#pragma once
+
+#include "version"
+#include "__private/type_traits.hpp"
+#include "__private/locale.h"
+#include <string>
+
+#ifndef __cpp_char8_t
+namespace std
+{
+	class CTL_LOCAL_CLASS u8string : public std::string
+	{
+	};
+}
+#endif
+
+namespace ctl
+{
+#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
+	template <typename T, typename CT = std::char_traits<T>, typename A = std::allocator<T>>
+	class CTL_LOCAL_CLASS basic_string : public std::basic_string<T, CT, A>
+	{
+		using __base = std::basic_string<T, CT, A>;
+
+	public:
+		inline T *data()
+		{ return const_cast<T *>(__base::data()); }
+	};
+
+	using string = basic_string<char>;
+	using wstring = basic_string<wchar_t>;
+	#ifdef __cpp_char8_t
+	using u8string = basic_string<char8_t>;
+	#endif
+	using u16string = basic_string<char16_t>;
+	using u32string = basic_string<char32_t>;
+#else
+	using std::basic_string;
+	using std::string;
+	using std::wstring;
+	#ifdef __cpp_char8_t
+	using std::u8string;
+	#endif
+	using std::u16string;
+	using std::u32string;
+#endif
+}

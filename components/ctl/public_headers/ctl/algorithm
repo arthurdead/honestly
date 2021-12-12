@@ -1,0 +1,25 @@
+#pragma once
+
+#include "version"
+#include <algorithm>
+#include <iterator>
+#include "functional"
+
+namespace ctl
+{
+	template <typename I, typename O>
+	constexpr O copy(I first, I last, O out)
+	{
+		using IT = typename std::iterator_traits<I>::value_type;
+
+		while(first != last) {
+			if constexpr(__fnctional::is_ref_wrapper<IT>::value) {
+				*out++ = *(*first++);
+			} else {
+				*out++ = *first++;
+			}
+		}
+
+		return out;
+	}
+}

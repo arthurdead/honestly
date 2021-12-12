@@ -1,0 +1,22 @@
+#pragma once
+
+#include "version"
+#include "type_traits"
+#include <utility>
+
+#ifdef __cpp_lib_to_underlying
+	#define __CTL_TO_UNDERLYING(x) std::to_underlying(x)
+#else
+	#define __CTL_TO_UNDERLYING(x) static_cast<std::underlying_type_t<std::decay_t<decltype(x)>>>(x)
+#endif
+
+namespace ctl
+{
+	template <typename D, typename S>
+	constexpr inline D &type_cast(const S &src) noexcept
+#if CTL_COMPILER & CTL_COMPILER_FLAG_ZAPCC
+	{ return *reinterpret_cast<D *>(&const_cast<S &>(src)); }
+#else
+	{ return *CTL_BITCAST(D *, &const_cast<S &>(src)); }
+#endif
+}

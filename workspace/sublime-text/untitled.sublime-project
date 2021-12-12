@@ -1,0 +1,75 @@
+{
+	"folders":
+	[
+		{
+			"path": "/home/arthurdead/Desktop/temp/honestly"
+		},
+		{
+			"path": "/home/arthurdead/Downloads/RE-flex/include/reflex"
+		},
+		{
+			"path": "/usr/include/vulkan"
+		},
+		{
+			"path": "/usr/include/xcb"
+		},
+		{
+			"path": "/usr/include/X11"
+		},
+		{
+			"path": "/usr/include/pci"
+		},
+		{
+			"path": "/usr/include/fontconfig"
+		},
+		{
+			"path": "/usr/include/freetype2"
+		},
+		{
+			"path": "/usr/include/harfbuzz"
+		}
+	],
+	"build_systems":
+	[
+		{
+			"name": "build ipc",
+			"shell_cmd": "echo 'build' >> $folder/.build_ipc",
+			"quiet": true,
+			"variants": [
+				{
+					"name": "fast",
+					"shell_cmd": "echo 'build_fast' >> $folder/.build_ipc",
+				},
+				{
+					"name": "debug",
+					"shell_cmd": "echo 'build_debug' >> $folder/.build_ipc",
+				},
+				{
+					"name": "custom",
+					"shell_cmd": "echo 'build_custom -DVERBOSE_BUILD -DCONFIGURATION=debug -DTOOLSET=llvm -DLIBRT=compiler-rt -DLIBUNWIND=libgcc -DLIBC=glibc -DLSB -DLIBCPP=libstdc++ -DLIBCPP_ABI=libsupc++ -DLD=lld' >> $folder/.build_ipc",
+				}
+			],
+		},
+		{
+			"name": "build manual",
+			"working_dir": "$folder",
+			"shell_cmd": "$folder/build.sh",
+			"quiet": true,
+			"file_regex": "^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$",
+			"env":
+			{
+				"TERM": "xterm-256color",
+			},
+			"variants": [
+				{
+					"name": "fast",
+					"shell_cmd": "$folder/build.sh -DFAST_BUILD",
+				},
+				{
+					"name": "debug",
+					"shell_cmd": "$folder/build.sh -DVERBOSE_BUILD -DCONFIGURATION=debug",
+				}
+			],
+		}
+	],
+}

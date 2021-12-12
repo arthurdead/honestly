@@ -1,0 +1,96 @@
+#pragma once
+
+#include "version"
+#include "utility"
+#include <functional>
+
+namespace ctl
+{
+	namespace __fnctional
+	{
+		template <typename T>
+		class CTL_LOCAL_CLASS reference_wrapper : public std::reference_wrapper<T>
+		{
+			using __base = std::reference_wrapper<T>;
+
+		public:
+			using __base::reference_wrapper;
+			using __base::operator=;
+
+			constexpr inline T &operator*() const noexcept
+			{ return __base::get(); }
+			constexpr inline T *operator->() const noexcept
+			{ return &__base::get(); }
+		};
+
+		template <typename T>
+		struct is_ref_wrapper : std::false_type
+		{
+		};
+	}
+
+	template <typename T>
+	class CTL_LOCAL_CLASS reference_wrapper : public __fnctional::reference_wrapper<T>
+	{
+		using __base = __fnctional::reference_wrapper<T>;
+
+	public:
+		using __fnctional::reference_wrapper<T>::reference_wrapper;
+		using __base::operator=;
+
+		reference_wrapper(reference_wrapper<const T> &&other) = delete;
+		reference_wrapper(const reference_wrapper<const T> &other) = delete;
+		reference_wrapper &operator=(reference_wrapper<const T> &&other) = delete;
+		reference_wrapper &operator=(const reference_wrapper<const T> &other) = delete;
+	};
+
+	template <typename T>
+	class CTL_LOCAL_CLASS reference_wrapper<const T> : public __fnctional::reference_wrapper<const T>
+	{
+		using __base = __fnctional::reference_wrapper<const T>;
+
+	public:
+		using __fnctional::reference_wrapper<const T>::reference_wrapper;
+		using __base::operator=;
+
+		constexpr inline reference_wrapper(reference_wrapper<T> &&other)
+			: reference_wrapper{std::move(type_cast<reference_wrapper<const T>>(other))} {}
+		constexpr inline reference_wrapper(const reference_wrapper<T> &other)
+			: reference_wrapper{type_cast<reference_wrapper<const T>>(other)} {}
+		constexpr inline reference_wrapper &operator=(reference_wrapper<T> &&other)
+		{ operator=(std::move(type_cast<reference_wrapper<const T>>(other))); return *this; }
+		constexpr inline reference_wrapper &operator=(const reference_wrapper<T> &other)
+		{ operator=(type_cast<reference_wrapper<const T>>(other)); return *this; }
+	};
+
+	namespace __fnctional
+	{
+		template <typename T>
+		struct is_ref_wrapper<ctl::reference_wrapper<T>> : std::true_type
+		{
+		};
+	}
+
+	template <typename T>
+	using ref_wrapper = reference_wrapper<T>;
+	template <typename T>
+	using cref_wrapper = reference_wrapper<const T>;
+
+	template <typename T>
+	constexpr inline reference_wrapper<T> ref(T &t) noexcept
+	{ return reference_wrapper<T>{t}; }
+	template <typename T>
+	constexpr inline reference_wrapper<T> ref(reference_wrapper<T> t) noexcept
+	{ return reference_wrapper<T>{t.get()}; }
+	template <typename T>
+	reference_wrapper<T> ref(T &&) = delete;
+
+	template <typename T>
+	constexpr inline reference_wrapper<const T> cref(const T &t) noexcept
+	{ return reference_wrapper<const T>{t}; }
+	template <typename T>
+	constexpr inline reference_wrapper<const T> cref(reference_wrapper<const T> t) noexcept
+	{ return reference_wrapper<const T>{t.get()}; }
+	template <typename T>
+	reference_wrapper<const T> cref(const T &&) = delete;
+}

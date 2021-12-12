@@ -1,0 +1,7 @@
+artifacts/
+**/*.gen.*
+thirdparty/zsh/git/
+.build_ipc
+test/bin/
+test/*.elf
+test/*.log

@@ -1,0 +1,180 @@
+#pragma once
+
+#include "version"
+#include "type_traits"
+#include "cstddef"
+#include "charconv"
+#include "filesystem"
+#include "string"
+#include <variant>
+#include <typeinfo>
+
+namespace ctl
+{
+	namespace __varnt
+	{
+		using litbase_t = std::variant<
+			std::monostate,
+			bool,
+			int,
+			unsigned int,
+			long,
+			unsigned long,
+			long long,
+			unsigned long long,
+			ssize_t,
+			std::size_t,
+			double,
+			long double,
+			float,
+			char,
+		#ifdef __cpp_char8_t
+			char8_t,
+		#endif
+			char16_t,
+			char32_t,
+			wchar_t,
+			std::string,
+		#ifdef __cpp_char8_t
+			std::u8string,
+		#endif
+			std::u16string,
+			std::u32string,
+			std::wstring
+		>;
+
+		enum /*class*/ litindexs : std::size_t
+		{
+			invalid,
+			bool_,
+			int_,
+			unsigned_int,
+			long_,
+			unsigned_long,
+			long_long,
+			unsigned_long_long,
+			ssize_t_,
+			size_t_,
+			double_,
+			long_double,
+			float_,
+			char_,
+		#ifdef __cpp_char8_t
+			char8_t_,
+		#endif
+			char16_t_,
+			char32_t_,
+			wchar_t_,
+			string,
+		#ifdef __cpp_char8_t
+			u8string,
+		#endif
+			u16string,
+			u32string,
+			wstring,
+			count,
+		};
+
+		static constexpr const std::initializer_list<const std::type_info *> litarr{
+			&typeid(bool),
+			&typeid(int),
+			&typeid(unsigned int),
+			&typeid(long),
+			&typeid(unsigned long),
+			&typeid(long long),
+			&typeid(unsigned long long),
+			&typeid(ssize_t),
+			&typeid(std::size_t),
+			&typeid(double),
+			&typeid(long double),
+			&typeid(float),
+			&typeid(char),
+		#ifdef __cpp_char8_t
+			&typeid(char8_t),
+		#endif
+			&typeid(char16_t),
+			&typeid(char32_t),
+			&typeid(wchar_t),
+			&typeid(std::string),
+		#ifdef __cpp_char8_t
+			&typeid(std::u8string),
+		#endif
+			&typeid(std::u16string),
+			&typeid(std::u32string),
+			&typeid(std::wstring)
+		};
+	}
+
+	class CTL_LOCAL_CLASS literal_variant : private __varnt::litbase_t
+	{
+		using __base = __varnt::litbase_t;
+
+	public:
+		using indexes = __varnt::litindexs;
+
+		using __base::variant;
+		using __base::operator=;
+		using __base::emplace;
+
+		constexpr inline bool operator==(const literal_variant &other) const noexcept
+		{ return (std::operator==(static_cast<const __base &>(*this), static_cast<const __base &>(other))); }
+		constexpr inline bool operator!=(const literal_variant &other) const noexcept
+		{ return (std::operator!=(static_cast<const __base &>(*this), static_cast<const __base &>(other))); }
+
+		inline literal_variant(std::string_view str) noexcept
+		{ __base::emplace<indexes::string>(str); }
+	#ifdef __cpp_char8_t
+		inline literal_variant(std::u8string_view str) noexcept
+		{ __base::emplace<indexes::u8string>(str); }
+	#endif
+		inline literal_variant(std::u16string_view str) noexcept
+		{ __base::emplace<indexes::u16string>(str); }
+		inline literal_variant(std::u32string_view str) noexcept
+		{ __base::emplace<indexes::u32string>(str); }
+		inline literal_variant(std::wstring_view str) noexcept
+		{ __base::emplace<indexes::wstring>(str); }
+
+		inline void clear() noexcept
+		{ __base::emplace<indexes::invalid>(); }
+
+		template <typename T>
+		inline explicit operator T() const noexcept
+		{ return convert_impl<T>(); }
+		template <typename T>
+		inline T convert() const noexcept
+		{ return convert_impl<T>(); }
+
+		inline bool empty() const noexcept
+		{ return (index() == indexes::invalid); }
+
+		constexpr inline indexes index() const noexcept
+		{ return static_cast<indexes>(__base::index()); }
+
+		template <typename T>
+	#ifdef __cpp_lib_constexpr_typeinfo
+		static constexpr indexes type_to_index() noexcept
+	#else
+		static indexes type_to_index() noexcept
+	#endif
+		{
+			constexpr const std::type_info &inf{typeid(std::decay_t<T>)};
+
+			std::size_t i{static_cast<std::size_t>(indexes::bool_)};
+
+			for(const std::type_info *it : __varnt::litarr) {
+				if((*it) == inf) {
+					return static_cast<indexes>(i);
+				}
+				++i;
+			}
+
+			return indexes::invalid;
+		}
+
+	private:
+		template <typename T>
+		T convert_impl() const noexcept;
+	};
+}
+
+#include "__private/variant.tpp"
