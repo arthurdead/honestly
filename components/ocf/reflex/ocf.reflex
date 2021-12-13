@@ -1,11 +1,11 @@
 %option full batch nodefault noindent noyywrap
 %option namespace="ocf::__private" lexer="lexer"
-%option outfile="ocf.reflex.cpp" header-file="ocf.reflex.hpp"
-%option tables-file="ocf.reflex_tables.cpp"
+%option outfile="reflex.gen.cpp" header-file="reflex.gen.hpp"
+%option tables-file="reflex_tables.gen.cpp"
 %option bison-complete bison-locations bison-cc-namespace="ocf::__private"
 
 %top {
-#include "ocf.bison.hpp"
+#include "bison.gen.hpp"
 #include "location.hpp"
 namespace ocf::__private { class parser; }
 %}
@@ -29,7 +29,7 @@ dbl_literal [-+]?{dbl_literal_base}
 hex_dbl_literal [-+]?0[xX]{dbl_literal_base}
 
 %{
-#include "ocf.bison.hpp"
+#include "bison.gen.hpp"
 #include <ctl/string>
 #include <ctl/string_view>
 #include <ctl/charconv>

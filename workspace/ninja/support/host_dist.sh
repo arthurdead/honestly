@@ -8,5 +8,6 @@ if [[ -f /etc/lsb-release ]]; then
 	done < /etc/lsb-release
 fi
 
+echo 'host_dist.sh: unknown' >&2
 echo -n 'Unknown'
 exit 1

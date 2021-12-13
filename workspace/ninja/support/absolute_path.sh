@@ -9,7 +9,7 @@ else
 fi
 
 if [[ -z $1 ]]; then
-	echo 'absolute_path.sh missing filename' >&2
+	echo 'absolute_path.sh: missing filename' >&2
 	if [[ $is_dir == 'true' ]]; then
 		echo -n $(mktemp -d)
 	else

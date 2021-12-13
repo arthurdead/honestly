@@ -1,5 +1,5 @@
 if [[ -z $1 ]]; then
-	echo 'hash.sh missing argument' >&2
+	echo 'hash.sh: missing argument' >&2
 	echo -n '0'
 	exit 1
 fi

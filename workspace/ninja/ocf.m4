@@ -9,17 +9,17 @@ PROJECT_FLAGS(`
 	m4_define(`CPP_FLAGS', -D__COMPILING_OCF)
 ')
 
-BISON(
+CXX_BISON(
 	COMPONENTS/ocf/bison/ocf.bison,
-	COMPONENTS/ocf/cpp/private_impl/ocf.bison.gen.cpp,
-	COMPONENTS/ocf/cpp/private_impl/ocf.bison.gen.hpp
+	COMPONENTS/ocf/cpp/private_impl/bison.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/bison.gen.hpp
 )
 
 REFLEX(
 	COMPONENTS/ocf/reflex/ocf.reflex,
-	COMPONENTS/ocf/cpp/private_impl/ocf.reflex.gen.cpp,
-	COMPONENTS/ocf/cpp/private_impl/ocf.reflex.gen.hpp,
-	COMPONENTS/ocf/cpp/private_impl/ocf.reflex_tables.gen.cpp
+	COMPONENTS/ocf/cpp/private_impl/reflex.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/reflex.gen.hpp,
+	COMPONENTS/ocf/cpp/private_impl/reflex_tables.gen.cpp
 )
 
 DECLARE_DEPENDENCY(project, `
@@ -47,7 +47,7 @@ CXX_STATIC_LIBRARY(ocf,
 	COMPONENTS/ocf/cpp/private_impl/driver.cpp,
 	COMPONENTS/ocf/cpp/private_impl/object.cpp,
 	COMPONENTS/ocf/cpp/private_impl/frontend.cpp,
-	COMPONENTS/ocf/cpp/private_impl/ocf.bison.gen.cpp,
-	COMPONENTS/ocf/cpp/private_impl/ocf.reflex.gen.cpp,
-	COMPONENTS/ocf/cpp/private_impl/ocf.reflex_tables.gen.cpp
+	COMPONENTS/ocf/cpp/private_impl/bison.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/reflex.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/reflex_tables.gen.cpp
 )

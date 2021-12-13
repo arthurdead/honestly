@@ -14,7 +14,5 @@ m4_define(OUTPUT_DIR, ROOT_DIR/test)
 m4_include(ctl.m4)
 m4_include(osal.m4)
 m4_include(gal.m4)
-m4_divert(-1)
-#m4_include(ocf.m4)
-m4_divert
+m4_include(ocf.m4)
 m4_include(launcher.m4)

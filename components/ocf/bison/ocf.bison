@@ -3,8 +3,8 @@
 %skeleton "lalr1.cc"
 %language "C++"
 
-%defines "ocf.bison.hpp"
-%output "ocf.bison.cpp"
+%defines "bison.gen.hpp"
+%output "bison.gen.cpp"
 %define api.namespace {ocf::__private}
 %define api.parser.class {parser}
 %define api.prefix {ocf}
@@ -20,7 +20,7 @@ namespace ocf::__private {
 %lex-param {lexer &__lxr}
 
 %code {
-#include "ocf.reflex.hpp"
+#include "reflex.gen.hpp"
 static inline ocf::__private::parser::symbol_type ocflex(ocf::__private::lexer &__lxr) noexcept
 { return __lxr.lex(); }
 }
@@ -90,7 +90,7 @@ static inline ocf::__private::parser::symbol_type ocflex(ocf::__private::lexer &
 								identifier.string_literal
 
 %code {
-#include "../driver.hpp"
+#include "driver.hpp"
 }
 
 %initial-action {

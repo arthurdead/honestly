@@ -385,7 +385,7 @@ __BASE_C_RULE_BITS')
 m4_define(__BASE_CC_RULE_BITS, `__HACK_SPACE`'ccflags=$ccflags m4_defn(__`'PROJECT`'_CC_FLAGS) m4_defn(`__LIBRARY_CC_FLAGS') m4_defn(__`'__SRC_FILE_HASH`'_CC_FLAGS)
 __BASE_C_RULE_BITS')
 
-m4_include(__private/loop_files.m4)
+m4_include(__private/loop_c_files.m4)
 
 m4_ifdef(`EMSCRIPTEN', `
 	m4_define(`__SO_EXT', wasm)
@@ -408,6 +408,38 @@ m4_ifdef(`__EXEC_EXT', `', `
 
 m4_define(CXX_LIB_PATH, `m4_ifelse($1, static_library, `__THIS_PROJECT_BUILDDIR/$1/$2/__CXX_AR_HASH/$2.__AR_EXT', `__THIS_PROJECT_BUILDDIR/$1/$2/__CXX_SO_HASH/$2.__SO_EXT')')
 m4_define(CC_LIB_PATH, `m4_ifelse($1, static_library, `__THIS_PROJECT_BUILDDIR/$1/$2/__CC_AR_HASH/$2.__AR_EXT', `__THIS_PROJECT_BUILDDIR/$1/$2/__CC_SO_HASH/$2.__SO_EXT')')
+
+m4_define(__UNDEFINE_FLAGS, `
+	m4_undefine($1`'_CPP_FLAGS)
+	m4_undefine($1`'_CPP_CXX_FLAGS)
+	m4_undefine($1`'_CPP_CC_FLAGS)
+	m4_undefine($1`'_CPP_C_FLAGS)
+
+	m4_undefine($1`'_CXX_CPP_FLAGS)
+	m4_undefine($1`'_CC_CPP_FLAGS)
+
+	m4_undefine($1`'_CXX_FLAGS)
+	m4_undefine($1`'_CC_FLAGS)
+	m4_undefine($1`'_C_FLAGS)
+
+	m4_undefine($1`'_M4_FLAGS)
+')
+
+m4_define(__UNDEFINE_TMP_FLAGS, `
+	m4_undefine(`CPP_FLAGS')
+	m4_undefine(`CPP_CXX_FLAGS')
+	m4_undefine(`CPP_CC_FLAGS')
+	m4_undefine(`CPP_C_FLAGS')
+
+	m4_undefine(`CXX_CPP_FLAGS')
+	m4_undefine(`CC_CPP_FLAGS')
+
+	m4_undefine(`CXX_FLAGS')
+	m4_undefine(`CC_FLAGS')
+	m4_undefine(`C_FLAGS')
+
+	m4_undefine(`M4_FLAGS')
+')
 
 m4_define(__STATIC_LIBRARY, `
 	m4_define(__`'PROJECT`'_static_library_$1_PATH, __TMP_LIBRARY_PATH)
@@ -432,6 +464,8 @@ __HACK_SPACE`'description=AR $1
 	m4_undefine(`__TMP_LIBRARY_PATH')
 	m4_undefine(`__TMP_BUILDDIR')
 	m4_undefine(`__TMP_OBJLIST')
+
+	__UNDEFINE_FLAGS(__LIBRARY)
 ')
 
 m4_define(CXX_STATIC_LIBRARY, `
@@ -474,41 +508,10 @@ __HACK_SPACE`'description=LN $1
 	m4_undefine(`__TMP_LIBRARY_PATH')
 	m4_undefine(`__TMP_BUILDDIR')
 	m4_undefine(`__TMP_OBJLIST')
+
 	m4_undefine(`__LIBRARY_LD_LIBS')
 	m4_undefine(`__LIBRARY_LD_FILES')
-	m4_undefine(`LIBRARY_PATH')
-')
-
-m4_define(__UNDEFINE_FLAGS, `
-	m4_undefine($1`'_CPP_FLAGS)
-	m4_undefine($1`'_CPP_CXX_FLAGS)
-	m4_undefine($1`'_CPP_CC_FLAGS)
-	m4_undefine($1`'_CPP_C_FLAGS)
-
-	m4_undefine($1`'_CXX_CPP_FLAGS)
-	m4_undefine($1`'_CC_CPP_FLAGS)
-
-	m4_undefine($1`'_CXX_FLAGS)
-	m4_undefine($1`'_CC_FLAGS)
-	m4_undefine($1`'_C_FLAGS)
-
-	m4_undefine($1`'_M4_FLAGS)
-')
-
-m4_define(__UNDEFINE_TMP_FLAGS, `
-	m4_undefine(`CPP_FLAGS')
-	m4_undefine(`CPP_CXX_FLAGS')
-	m4_undefine(`CPP_CC_FLAGS')
-	m4_undefine(`CPP_C_FLAGS')
-
-	m4_undefine(`CXX_CPP_FLAGS')
-	m4_undefine(`CC_CPP_FLAGS')
-
-	m4_undefine(`CXX_FLAGS')
-	m4_undefine(`CC_FLAGS')
-	m4_undefine(`C_FLAGS')
-
-	m4_undefine(`M4_FLAGS')
+	__UNDEFINE_FLAGS(__LIBRARY)
 ')
 
 m4_define(CXX_EXECUTABLE, `
@@ -528,9 +531,11 @@ __HACK_SPACE`'description=`LD' $1
 	m4_undefine(`__TMP_LIBRARY_PATH')
 	m4_undefine(`__TMP_BUILDDIR')
 	m4_undefine(`__TMP_OBJLIST')
+
+	m4_undefine(`LIBRARY_PATH')
 	m4_undefine(`__LIBRARY_LD_LIBS')
 	m4_undefine(`__LIBRARY_LD_FILES')
-	m4_undefine(`LIBRARY_PATH')
+	__UNDEFINE_FLAGS(__LIBRARY)
 ')
 
 m4_ifdef(`PCH_IS_SUPPORTED', `
@@ -736,7 +741,7 @@ m4_define(DECLARE_DEPENDENCY, `
 	m4_ifdef(`LD_LIBS', `
 		m4_define(__DEP_DEFINE_NAME`'_LD_LIBS, m4_defn(`LD_LIBS'))
 	')
-	m4_ifdef(`LD_LIBS', `
+	m4_ifdef(`LD_FILES', `
 		m4_define(__DEP_DEFINE_NAME`'_LD_FILES, m4_defn(`LD_FILES'))
 	')
 

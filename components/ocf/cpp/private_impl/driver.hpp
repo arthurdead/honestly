@@ -6,7 +6,7 @@
 #include <ocf/object.hpp>
 #include <ocf/frontend.hpp>
 
-#include "generated/location.hpp"
+#include "location.hpp"
 
 namespace ocf::__private
 {

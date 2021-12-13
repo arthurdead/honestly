@@ -24,8 +24,8 @@ CTL_CLANG_WARNING_DISABLE("-Wundef")
 CTL_CLANG_WARNING_DISABLE("-Wdeprecated-declarations")
 #pragma push_macro("stdin")
 #undef stdin
-#include "generated/ocf.reflex.hpp"
-#include "generated/ocf.bison.hpp"
+#include "reflex.gen.hpp"
+#include "bison.gen.hpp"
 #pragma pop_macro("stdin")
 CTL_CLANG_WARNING_POP
 
