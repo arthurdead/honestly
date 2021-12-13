@@ -57,6 +57,9 @@
 		(static_cast<uint32_t>(minor) << 12) | \
 		static_cast<uint32_t>(patch))
 
+#define GAL_VK_HEADER_VERSION_COMPLETE \
+	VK_HEADER_VERSION_COMPLETE
+
 #define GAL_VK_API_VERSION_VARIANT(version) (static_cast<uint32_t>(version) >> 29)
 #define GAL_VK_API_VERSION_MAJOR(version) ((static_cast<uint32_t>(version) >> 22) & 0x7FU)
 #define GAL_VK_API_VERSION_MINOR(version) ((static_cast<uint32_t>(version) >> 12) & 0x3FFU)

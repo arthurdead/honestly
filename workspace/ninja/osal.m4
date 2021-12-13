@@ -12,11 +12,11 @@ DECLARE_DEPENDENCY(project, `
 
 DECLARE_DEPENDENCY(static_library, osal, `
 	m4_define(`CPP_FLAGS', -D__OSAL_IS_STATIC)
-	m4_define(`LD_FILES', LIB_PATH(static_library, osal) LIB_PATH(static_library, osal_shared))
+	m4_define(`LD_FILES', CXX_LIB_PATH(static_library, osal) CXX_LIB_PATH(static_library, osal_shared))
 ')
 
 DECLARE_DEPENDENCY(static_library, main, `
-	m4_define(`LD_FILES', LIB_PATH(static_library, main))
+	m4_define(`LD_FILES', CXX_LIB_PATH(static_library, main))
 ')
 
 PROJECT_DEPENDENCY(osal, project)
@@ -27,7 +27,7 @@ PROJECT_DEPENDENCY(ctl, static_library, ctl)
 LIBRARY_FLAGS(`
 	m4_define(`CPP_FLAGS', -D__OSAL_IS_STATIC)
 ')
-STATIC_LIBRARY(osal,
+CXX_STATIC_LIBRARY(osal,
 	COMPONENTS/osal/private_impl/terminal.cpp,
 	COMPONENTS/osal/private_impl/process.cpp,
 	COMPONENTS/osal/private_impl/commandline.cpp,
@@ -38,7 +38,7 @@ STATIC_LIBRARY(osal,
 LIBRARY_FLAGS(`
 	m4_define(`CPP_FLAGS', -D__OSAL_IS_STATIC)
 ')
-STATIC_LIBRARY(osal_shared,
+CXX_STATIC_LIBRARY(osal_shared,
 	COMPONENTS/osal/shared_impl/process.cpp,
 	COMPONENTS/osal/shared_impl/commandline.cpp
 )
@@ -46,6 +46,6 @@ STATIC_LIBRARY(osal_shared,
 LIBRARY_FLAGS(`
 	m4_define(`CPP_FLAGS', -D__OSAL_IS_STATIC)
 ')
-STATIC_LIBRARY(main,
+CXX_STATIC_LIBRARY(main,
 	COMPONENTS/osal/shared_impl/main.cpp
 )

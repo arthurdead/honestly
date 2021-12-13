@@ -9,6 +9,9 @@ m4_ifdef(`__HELPERS_INCLUDED', `', `
 
 	m4_define(__SUPPORT_SCRIPT, __SUPPORT_DIR/$1.sh)
 
+	m4_define(`UPPERCASE', `m4_translit(`$*', `a-z', `A-Z')')
+	m4_define(`LOWERCASE', `m4_translit(`$*', `A-Z', `a-z')')
+
 	m4_define(REMOVE_NEWLINE, `m4_esyscmd(__SUPPORT_SCRIPT(remove_newline) $1)')
 	m4_define(ABSOLUTE_PATH, `m4_esyscmd(__SUPPORT_SCRIPT(absolute_path) $1)')
 

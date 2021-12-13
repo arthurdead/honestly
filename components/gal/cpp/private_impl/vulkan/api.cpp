@@ -18,7 +18,7 @@ namespace gal::vulkan
 		static vk::ApplicationInfo appinfo{
 			nullptr, 0,
 			nullptr, 0,
-			VK_HEADER_VERSION_COMPLETE
+			GAL_VK_HEADER_VERSION_COMPLETE
 		};
 		static ctl::unique_ptr<vk::raii::Context> ctx;
 		static ctl::unique_ptr<instance> inst;

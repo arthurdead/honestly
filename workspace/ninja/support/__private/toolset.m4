@@ -1,7 +1,7 @@
 m4_ifdef(`ZAPCC', `
 	m4_define(__CXX_LATEST_VER, 2a)
 
-	m4_ifdef(`__CPP_IS_CXX', `
+	m4_ifdef(`__CPP_IS_C', `
 		m4_define(__CXX_CPP_LATEST_VER, 2a)
 	')
 ')
@@ -9,17 +9,15 @@ m4_ifdef(`ZAPCC', `
 m4_ifdef(`__CXX_LATEST_VER', `', `
 	m4_define(__CXX_LATEST_VER, 2b)
 ')
-
-m4_ifdef(`__CC_LATEST_VER', `', `
-	m4_define(__CC_LATEST_VER, 2b)
-')
-
 m4_ifdef(`__CXX_CPP_LATEST_VER', `', `
 	m4_define(__CXX_CPP_LATEST_VER, 2b)
 ')
 
+m4_ifdef(`__CC_LATEST_VER', `', `
+	m4_define(__CC_LATEST_VER, 2x)
+')
 m4_ifdef(`__CC_CPP_LATEST_VER', `', `
-	m4_define(__CC_CPP_LATEST_VER, 2b)
+	m4_define(__CC_CPP_LATEST_VER, 2x)
 ')
 
 m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -std=gnu++`'__CXX_LATEST_VER)

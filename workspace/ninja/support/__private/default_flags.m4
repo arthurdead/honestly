@@ -32,7 +32,8 @@ m4_ifelse(LIBCPP, libstdc++, `
 
 m4_ifelse(TOOLSET, llvm, `
 	m4_ifdef(`ZAPCC', `', `
-		m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') -fpch-codegen -fpch-instantiate-templates)
+		m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') -fpch-codegen)
+		m4_define(`__CXX_CPP_FLAGS', m4_defn(`__CXX_CPP_FLAGS') -fpch-instantiate-templates)
 
 		m4_ifelse(CONFIGURATION, debug, `
 			m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') -fpch-debuginfo)
@@ -56,10 +57,10 @@ m4_ifelse(TOOLSET, llvm, `
 	m4_define(`__CPP_FLAGS', m4_defn(`__CPP_FLAGS') -Wno-reserved-id-macro)
 ')
 
-m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -Wno-padded -Wno-switch-enum)
+m4_define(`__C_FLAGS', m4_defn(`__C_FLAGS') -Wno-padded -Wno-switch-enum)
 m4_ifelse(TOOLSET, llvm, `
 	m4_ifdef(`EMSCRIPTEN', `', `
-		m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -Wno-reserved-identifier)
+		m4_define(`__C_FLAGS', m4_defn(`__C_FLAGS') -Wno-reserved-identifier)
 	')
 	m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -Wno-c++98-compat -Wno-c++98-c++11-compat -Wno-c++98-c++11-c++14-compat)
 	m4_define(`__CXX_FLAGS', m4_defn(`__CXX_FLAGS') -Wno-unused-template)

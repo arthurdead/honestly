@@ -18,6 +18,6 @@ PROJECT_DEPENDENCY(gal, static_library, xcb)
 PROJECT_DEPENDENCY(gal, static_library, vulkan)
 
 m4_define(LIBRARY_PATH, OUTPUT_DIR)
-EXECUTABLE(launcher,
+CXX_EXECUTABLE(launcher,
 	COMPONENTS/launcher/main.cpp
 )

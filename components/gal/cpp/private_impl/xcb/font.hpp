@@ -11,7 +11,7 @@ namespace gal::xcb
 	{
 	public:
 		inline font(connection &conn_, __font::impl &base_, xcb_render_pictformat_t fmt_) noexcept
-			: conn{&conn_}, base{base_}, fmt{fmt_}
+			: conn{&conn_}, base{&base_}, fmt{fmt_}
 		{
 		}
 
@@ -31,6 +31,8 @@ namespace gal::xcb
 			}
 
 		private:
+			friend class font;
+
 			glyph_set() = delete;
 			glyph_set(const glyph_set &) = delete;
 			glyph_set &operator=(const glyph_set &) = delete;
@@ -38,7 +40,7 @@ namespace gal::xcb
 			void load(__font::impl &base, std::string_view str) noexcept;
 
 			bool load(__font::impl &base, char32_t c) noexcept;
-			inline bool load(__font::impl *base, char c) noexcept
+			inline bool load(__font::impl &base, char c) noexcept
 			{ return load(base, static_cast<char32_t>(c)); }
 
 			connection *conn;

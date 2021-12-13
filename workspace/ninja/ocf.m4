@@ -11,15 +11,15 @@ PROJECT_FLAGS(`
 
 BISON(
 	COMPONENTS/ocf/bison/ocf.bison,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.bison.cpp,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.bison.hpp
+	COMPONENTS/ocf/cpp/private_impl/ocf.bison.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/ocf.bison.gen.hpp
 )
 
 REFLEX(
 	COMPONENTS/ocf/reflex/ocf.reflex,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.reflex.cpp,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.reflex.hpp,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.reflex_tables.cpp
+	COMPONENTS/ocf/cpp/private_impl/ocf.reflex.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/ocf.reflex.gen.hpp,
+	COMPONENTS/ocf/cpp/private_impl/ocf.reflex_tables.gen.cpp
 )
 
 DECLARE_DEPENDENCY(project, `
@@ -28,7 +28,7 @@ DECLARE_DEPENDENCY(project, `
 
 DECLARE_DEPENDENCY(static_library, ocf, `
 	m4_define(`CPP_FLAGS', -D__OCF_IS_STATIC)
-	m4_define(`LD_FILES', LIB_PATH(static_library, ocf))
+	m4_define(`LD_FILES', CXX_LIB_PATH(static_library, ocf))
 	m4_define(`LD_LIBS', -lreflexmin)
 ')
 
@@ -43,11 +43,11 @@ PROJECT_DEPENDENCY(osal, static_library, osal)
 LIBRARY_FLAGS(`
 	m4_define(`CPP_FLAGS', -D__OCF_IS_STATIC)
 ')
-STATIC_LIBRARY(ocf,
+CXX_STATIC_LIBRARY(ocf,
 	COMPONENTS/ocf/cpp/private_impl/driver.cpp,
 	COMPONENTS/ocf/cpp/private_impl/object.cpp,
 	COMPONENTS/ocf/cpp/private_impl/frontend.cpp,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.bison.cpp,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.reflex.cpp,
-	COMPONENTS/ocf/cpp/private_impl/generated/ocf.reflex_tables.cpp
+	COMPONENTS/ocf/cpp/private_impl/ocf.bison.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/ocf.reflex.gen.cpp,
+	COMPONENTS/ocf/cpp/private_impl/ocf.reflex_tables.gen.cpp
 )

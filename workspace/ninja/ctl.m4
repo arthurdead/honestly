@@ -8,7 +8,7 @@ DECLARE_DEPENDENCY(project, `
 
 DECLARE_DEPENDENCY(static_library, ctl, `
 	m4_define(`CPP_FLAGS', -D__CTL_IS_STATIC)
-	m4_define(`LD_FILES', LIB_PATH(static_library, ctl) LIB_PATH(static_library, ctl_shared))
+	m4_define(`LD_FILES', CXX_LIB_PATH(static_library, ctl) CXX_LIB_PATH(static_library, ctl_shared))
 ')
 
 PROJECT_FLAGS(`
@@ -18,7 +18,7 @@ PROJECT_FLAGS(`
 PROJECT_DEPENDENCY(ctl, project)
 
 m4_ifdef(`PCH_IS_SUPPORTED', `
-	PCH(static_library,
+	CXX_PCH(static_library,
 		COMPONENTS/ctl/public_headers/ctl/version
 	)
 ')
@@ -26,13 +26,13 @@ m4_ifdef(`PCH_IS_SUPPORTED', `
 LIBRARY_FLAGS(`
 	m4_define(`CPP_FLAGS', -D__CTL_IS_STATIC)
 ')
-STATIC_LIBRARY(ctl,
+CXX_STATIC_LIBRARY(ctl,
 	COMPONENTS/ctl/private_impl/charconv.cpp
 )
 
 LIBRARY_FLAGS(`
 	m4_define(`CPP_FLAGS', -D__CTL_IS_STATIC)
 ')
-STATIC_LIBRARY(ctl_shared,
+CXX_STATIC_LIBRARY(ctl_shared,
 	COMPONENTS/ctl/shared_impl/memory.cpp
 )
