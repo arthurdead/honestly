@@ -1,0 +1,55 @@
+#pragma once
+
+#include <cpa/compilers.h>
+
+#define __STDI_INCLUDE_NEXT_HEADER <thread>
+#include "__details/include_next.h"
+
+#ifndef __STDI_THREAD_HPP
+	#include "version"
+
+	#define STDI_THREAD_API_FLAG_PTHREAD    (1 << 0)
+	#define STDI_THREAD_API_FLAG_NONE       (1 << 1)
+	#define __STDI_THREAD_API_FLAG_LAST_BIT       1
+
+	#define STDI_THREAD_API_PTHREAD         ((1 << (__STDI_THREAD_API_FLAG_LAST_BIT+1))|STDI_THREAD_API_FLAG_PTHREAD)
+	#define STDI_THREAD_API_GTHREAD_PTHREAD ((1 << (__STDI_THREAD_API_FLAG_LAST_BIT+2))|STDI_THREAD_API_FLAG_PTHREAD)
+	#define STDI_THREAD_API_GTHREAD_NONE    ((1 << (__STDI_THREAD_API_FLAG_LAST_BIT+3))|STDI_THREAD_API_FLAG_NONE)
+	#define STDI_THREAD_API_C11             ((1 << (__STDI_THREAD_API_FLAG_LAST_BIT+4)))
+	#define STDI_THREAD_API_EXTERNAL        ((1 << (__STDI_THREAD_API_FLAG_LAST_BIT+5)))
+	#define STDI_THREAD_API_WINDOWS         ((1 << (__STDI_THREAD_API_FLAG_LAST_BIT+6)))
+	#define STDI_THREAD_API_NONE            ((1 << (__STDI_THREAD_API_FLAG_LAST_BIT+7))|STDI_THREAD_API_FLAG_NONE)
+
+	#if STDI_CXX_STDLIB == STDI_STDLIB_LIBCPP
+		#ifdef _LIBCPP_HAS_THREAD_API_PTHREAD
+			#define STDI_THREAD_API STDI_THREAD_API_PTHREAD
+		#elif defined _LIBCPP_HAS_THREAD_API_C11
+			#define STDI_THREAD_API STDI_THREAD_API_C11
+		#elif defined _LIBCPP_HAS_THREAD_API_EXTERNAL
+			#define STDI_THREAD_API STDI_THREAD_API_EXTERNAL
+		#elif defined _LIBCPP_HAS_THREAD_API_WIN32
+			#define STDI_THREAD_API STDI_THREAD_API_WINDOWS
+		#elif defined _LIBCPP_HAS_NO_THREADS
+			#define STDI_THREAD_API STDI_THREAD_API_NONE
+		#else
+			#error
+		#endif
+	#elif STDI_CXX_STDLIB == STDI_STDLIB_GLIBCXX
+		#ifdef _GLIBCXX_HAS_GTHREADS
+			#include <bits/gthr-default.h>
+
+			#ifdef _GLIBCXX_GCC_GTHR_POSIX_H
+				#define STDI_THREAD_API STDI_THREAD_API_GTHREAD_PTHREAD
+			#elif defined _GLIBCXX_GCC_GTHR_SINGLE_H
+				#define STDI_THREAD_API STDI_THREAD_API_GTHREAD_NONE
+			#else
+				#error
+			#endif
+		#else
+			#define STDI_THREAD_API STDI_THREAD_API_NONE
+		#endif
+	#else
+		#error
+	#endif
+#define __STDI_THREAD_HPP
+#endif

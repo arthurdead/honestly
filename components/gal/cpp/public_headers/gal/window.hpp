@@ -39,13 +39,13 @@ namespace gal
 		window(window &&) noexcept = default;
 		window &operator=(window &&) noexcept = default;
 
-		GAL_SHARED_API GAL_SHARED_API_CALL window(std::size_t x, std::size_t y, std::size_t w, std::size_t h) noexcept;
-		inline window(std::size_t w, std::size_t h) noexcept
-			: window{~0u, ~0u, w, h}
+		GAL_SHARED_API GAL_SHARED_API_CALL window(absolute_rectangle rect) noexcept;
+		inline window(dimension rect) noexcept
+			: window{absolute_rectangle{~0u, ~0u, rect.width, rect.height}}
 		{
 		}
 		inline window() noexcept
-			: window{~0u, ~0u, ~0u, ~0u}
+			: window{absolute_rectangle{~0u, ~0u, ~0u, ~0u}}
 		{
 		}
 		virtual ~window() noexcept;

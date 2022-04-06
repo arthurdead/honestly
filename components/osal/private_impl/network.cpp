@@ -1,10 +1,15 @@
 #include <osal/network.hpp>
+#include <cpa/kernels.h>
 
-#if CTL_TARGET_OS == CTL_OS_WINDOWS
+#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 	#include <windows.h>
-#elif CTL_LIBC & CTL_LIBC_FLAG_POSIX
+
+	#define __OSAL_HOST_NAME_MAX 256
+#elif CPA_TARGET_KERNEL & CPA_KERNEL_FLAG_POSIX
 	#include <unistd.h>
 	#include <climits>
+
+	#define __OSAL_HOST_NAME_MAX HOST_NAME_MAX
 #else
 	#error
 #endif
@@ -13,12 +18,8 @@ namespace osal
 {
 	OSAL_SHARED_API std::string OSAL_SHARED_API_CALL hostname() noexcept
 	{
-	#if CTL_LIBC & CTL_LIBC_FLAG_POSIX
-		char tmp[HOST_NAME_MAX]{'\0'};
-	#else
-		#error
-	#endif
+		char tmp[__OSAL_HOST_NAME_MAX];
 		gethostname(tmp, std::size(tmp));
-		return std::string{tmp};
+		return std::string{std::move(tmp)};
 	}
 }

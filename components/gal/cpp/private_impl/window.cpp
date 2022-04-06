@@ -30,8 +30,8 @@ namespace gal
 
 	}
 
-	GAL_SHARED_API GAL_SHARED_API_CALL window::window(std::size_t x, std::size_t y, std::size_t w, std::size_t h) noexcept
-		: impl{__win::create_impl(*this, x, y, w, h)}
+	GAL_SHARED_API GAL_SHARED_API_CALL window::window(absolute_rectangle rect) noexcept
+		: impl{__win::create_impl(*this, rect)}
 	{
 		if(__rndr::initalized) {
 			impl.ref<__win::impl>().create_renderer();

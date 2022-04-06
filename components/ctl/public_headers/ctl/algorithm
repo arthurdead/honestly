@@ -1,6 +1,5 @@
 #pragma once
 
-#include "version"
 #include <algorithm>
 #include <iterator>
 #include "functional"
@@ -13,7 +12,7 @@ namespace ctl
 		using IT = typename std::iterator_traits<I>::value_type;
 
 		while(first != last) {
-			if constexpr(__fnctional::is_ref_wrapper<IT>::value) {
+			if constexpr(__details_ref_wrapper::is_ref_wrapper<IT>::value) {
 				*out++ = *(*first++);
 			} else {
 				*out++ = *first++;

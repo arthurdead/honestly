@@ -8,12 +8,12 @@ namespace gal
 {
 	namespace __win
 	{
-		class CTL_LOCAL_CLASS CTL_NOVTABLE impl;
+		class CTL_LOCAL_CLASS impl;
 	}
 
 	namespace __rndr
 	{
-		class CTL_LOCAL_CLASS CTL_NOVTABLE impl
+		class CTL_LOCAL_CLASS impl
 		{
 		public:
 			virtual ~impl() noexcept;

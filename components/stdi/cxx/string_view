@@ -1,0 +1,21 @@
+#pragma once
+
+#include <cpa/compilers.h>
+
+#define __STDI_INCLUDE_NEXT_HEADER <string_view>
+#include "__details/include_next.h"
+
+#ifndef __STDI_STRING_VIEW_HPP
+	#include <cpa/compiler_builtins.hpp>
+	#include "version"
+
+	#ifndef __cpp_char8_t
+namespace std
+{
+	class CPA_LOCAL_CLASS u8string_view : public std::string_view
+	{
+	};
+}
+	#endif
+#define __STDI_STRING_VIEW_HPP
+#endif

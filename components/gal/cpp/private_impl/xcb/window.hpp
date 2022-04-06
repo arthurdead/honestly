@@ -9,6 +9,7 @@
 #include "connection.hpp"
 #include "../window.hpp"
 #include "atom.hpp"
+#include "picture.hpp"
 #include "xcb.hpp"
 #include <limits>
 #include <initializer_list>
@@ -29,17 +30,22 @@ namespace gal::xcb
 		{
 		}
 
-		window(class connection &conn, const class screen &scrn, std::size_t x, std::size_t y, std::size_t w, std::size_t h) noexcept;
+		window(class connection &conn, const class screen &scrn, absolute_rectangle rect) noexcept;
 		~window() noexcept override;
 
 		static void shutdown() noexcept;
 
 		inline operator xcb_window_t() const noexcept
 		{ return id; }
+		/*inline operator xcb_drawable_t() const noexcept
+		{ return static_cast<xcb_drawable_t>(id); }*/
 		inline xcb_window_t &native() noexcept
 		{ return id; }
 		inline const xcb_window_t &native() const noexcept
 		{ return id; }
+
+		inline operator const class picture &() const noexcept
+		{ return *pic; }
 
 		__pen::impl *create_pen() noexcept override final;
 
@@ -111,6 +117,8 @@ namespace gal::xcb
 
 		inline class connection &connection() noexcept
 		{ return *conn; }
+		inline class screen &screen() noexcept
+		{ return *scrn; }
 
 	private:
 		window(const window &) noexcept = delete;
@@ -119,5 +127,6 @@ namespace gal::xcb
 		class connection *conn;
 		xcb_window_t id;
 		class screen *scrn;
+		ctl::unique_ptr<class picture> pic;
 	};
 }

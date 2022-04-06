@@ -1,0 +1,34 @@
+#pragma once
+
+#include <cpa/compilers.h>
+
+#ifndef __STDI_BIT_HPP
+	#include "version"
+
+	#ifdef __STDI_GLIBCXX_ON_ZAPCC
+		#pragma push_macro("__builtin_bit_cast")
+
+		#define __builtin_bit_cast(T, F) (*reinterpret_cast<T *>(&F))
+	#endif
+#endif
+
+#pragma push_macro("__STDI_BIT_HPP")
+#define __STDI_BIT_HPP
+
+#define __STDI_INCLUDE_NEXT_HEADER <bit>
+#include "__details/include_next.h"
+
+#undef __STDI_BIT_HPP
+#pragma pop_macro("__STDI_BIT_HPP")
+
+#ifndef __STDI_BIT_HPP
+	#ifdef __STDI_GLIBCXX_ON_ZAPCC
+		#undef __builtin_bit_cast
+
+		#pragma pop_macro("__builtin_bit_cast")
+	#endif
+#endif
+
+#ifndef __STDI_BIT_HPP
+	#define __STDI_BIT_HPP
+#endif

@@ -1,0 +1,39 @@
+#include <cpa/compilers.h>
+
+#ifndef __STDI_TYPE_TRAITS_HPP
+	#include "version"
+
+	#ifdef __STDI_GLIBCXX_ON_ZAPCC
+namespace std
+{
+	constexpr bool is_constant_evaluated() noexcept
+	{ return false; }
+}
+
+		#pragma push_macro("__cplusplus")
+		#if __cplusplus > 202002L
+			#undef __cplusplus
+			#define __cplusplus 202002L
+		#endif
+	#endif
+#endif
+
+#pragma push_macro("__STDI_TYPE_TRAITS_HPP")
+#define __STDI_TYPE_TRAITS_HPP
+
+#define __STDI_INCLUDE_NEXT_HEADER <type_traits>
+#include "__details/include_next.h"
+
+#undef __STDI_TYPE_TRAITS_HPP
+#pragma pop_macro("__STDI_TYPE_TRAITS_HPP")
+
+#ifndef __STDI_TYPE_TRAITS_HPP
+	#ifdef __STDI_GLIBCXX_ON_ZAPCC
+		#undef __cplusplus
+		#pragma pop_macro("__cplusplus")
+	#endif
+#endif
+
+#ifndef __STDI_TYPE_TRAITS_HPP
+	#define __STDI_TYPE_TRAITS_HPP
+#endif

@@ -1,0 +1,76 @@
+#include <cpa/compilers.h>
+
+#ifndef __STDI_VERSION_HPP
+	#include "features.h"
+
+	#if STDI_C_STDLIB == STDI_STDLIB_MUSL
+		#ifndef _LIBCPP_HAS_MUSL_LIBC
+			#define _LIBCPP_HAS_MUSL_LIBC
+		#endif
+	#endif
+
+	#if CPA_COMPILER & CPA_COMPILER_FLAG_ZAPCC
+		#undef __cpp_char8_t
+		#undef __cpp_aligned_new
+		#undef __cpp_impl_three_way_comparison
+		#undef __cpp_deduction_guides
+		#undef __cpp_concepts
+		#undef __cpp_constexpr_dynamic_alloc
+		#define _LIBCPP_HAS_NO_BUILTIN_IS_CONSTANT_EVALUATED
+		#define _LIBCPP_HAS_NO_CHAR8_T
+		#define _LIBCPP_NO_HAS_CHAR8_T
+	#endif
+#endif
+
+#pragma push_macro("__STDI_VERSION_HPP")
+#define __STDI_VERSION_HPP
+
+#define __STDI_INCLUDE_NEXT_HEADER <version>
+#include "__details/include_next.h"
+
+#undef __STDI_VERSION_HPP
+#pragma pop_macro("__STDI_VERSION_HPP")
+
+#ifndef __STDI_VERSION_HPP
+	#define STDI_CXX_STDLIB_FLAG_NIX         (1 << 0)
+	#define __STDI_CXX_STDLIB_FLAGS_LAST_BIT       0
+
+	#define STDI_STDLIB_GLIBCXX ((1 << (__STDI_CXX_STDLIB_FLAGS_LAST_BIT+1))|STDI_CXX_STDLIB_FLAG_NIX)
+	#define STDI_STDLIB_LIBCPP  ((1 << (__STDI_CXX_STDLIB_FLAGS_LAST_BIT+2))|STDI_CXX_STDLIB_FLAG_NIX)
+
+	#ifdef _LIBCPP_VERSION
+		#define STDI_CXX_STDLIB STDI_STDLIB_LIBCPP
+	#elif defined __GLIBCXX__ || defined __GLIBCPP__
+		#define STDI_CXX_STDLIB STDI_STDLIB_GLIBCXX
+	#else
+		#error
+	#endif
+
+	#if STDI_CXX_STDLIB == STDI_STDLIB_GLIBCXX
+		#if defined _GLIBCXX_CONCEPT_CHECKS || defined _GLIBCPP_CONCEPT_CHECKS
+			#define STDI_GLIBCXX_CONCEPT_CHECKS
+		#endif
+
+		#if CPA_COMPILER & CPA_COMPILER_FLAG_ZAPCC
+			#define __STDI_GLIBCXX_ON_ZAPCC
+		#endif
+	#endif
+
+	#if CPA_COMPILER & CPA_COMPILER_FLAG_ZAPCC
+		#undef __cpp_lib_is_constant_evaluated
+		#undef __cpp_lib_concepts
+		#undef __cpp_lib_three_way_comparison
+		#if STDI_CXX_STDLIB == STDI_STDLIB_LIBCPP
+			#undef _LIBCPP_COMPILER_HAS_BUILTIN_LAUNDER
+		#elif STDI_CXX_STDLIB == STDI_STDLIB_GLIBCXX
+			#undef _GLIBCXX_USE_CHAR8_T
+			#undef _GLIBCXX_HAVE_BUILTIN_IS_CONSTANT_EVALUATED
+			#undef _GLIBCXX_HAVE_BUILTIN_LAUNDER
+			#define __builtin_is_constant_evaluated() (false)
+		#endif
+	#endif
+#endif
+
+#ifndef __STDI_VERSION_HPP
+	#define __STDI_VERSION_HPP
+#endif

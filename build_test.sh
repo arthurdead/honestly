@@ -1,9 +1,9 @@
 clear
 
-args=$args' '-DTOOLSET=llvm
-#args=$args' '-DTOOLSET=gnu
+#args=$args' '-DTOOLSET=llvm
+args=$args' '-DTOOLSET=gnu
 args=$args' '-DLD=lld
-#args=$args' '-DLD=ld
+#args=$args' '-DLD=mold
 #args=$args' '-DLD=wasm-lld
 args=$args' '-DLIBRT=compiler-rt
 #args=$args' '-DLIBRT=libgcc
@@ -27,7 +27,7 @@ args=$args' '-DCONFIGURATION=debug
 #args=$args' '-DLSB
 #args=$args' '-DVERBOSE_BUILD
 args=$args' '-DFAST_BUILD
-args=$args' '-DCCACHE=ccache
+args=$args' '-DCCACHE=buildcache
 #args=$args' '-DCOMPDB_COMPATIBLE
 args=$args' '-DCOLLECT_WARNED
 args=$args' '-DINFO_COMMENT

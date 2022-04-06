@@ -14,12 +14,12 @@ namespace gal
 {
 	namespace __rndr
 	{
-		class CTL_LOCAL_CLASS CTL_NOVTABLE impl;
+		class CTL_LOCAL_CLASS impl;
 	}
 
 	namespace __pen
 	{
-		class CTL_LOCAL_CLASS CTL_NOVTABLE impl
+		class CTL_LOCAL_CLASS impl
 		{
 		public:
 			virtual ~impl() noexcept;
@@ -39,7 +39,7 @@ namespace gal
 
 	namespace __win
 	{
-		class CTL_LOCAL_CLASS CTL_NOVTABLE impl
+		class CTL_LOCAL_CLASS impl
 		{
 		public:
 			virtual ~impl() noexcept;
@@ -61,6 +61,6 @@ namespace gal
 			ctl::unique_ptr<__rndr::impl> rndr;
 		};
 
-		using create_impl_t = impl *(*)(ctl::optional_ref<window>, std::size_t, std::size_t, std::size_t, std::size_t);
+		using create_impl_t = impl *(*)(ctl::optional_ref<window>, absolute_rectangle);
 	}
 }

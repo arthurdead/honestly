@@ -1,0 +1,38 @@
+#pragma once
+
+#include <string_view>
+#include <source_location>
+#include "__details/api.h"
+#include <fmt/core.h>
+
+namespace ctl::__details_assert
+{
+	enum class fail : unsigned char
+	{
+		fatal,
+		trap,
+		ignore,
+	};
+
+	extern CTL_SHARED_API fail CTL_SHARED_API_CALL impl(std::string_view nms, std::string msg, std::source_location loc = std::source_location::current()) noexcept;
+}
+
+#define CTL_ASSERT(expr, ...) \
+	if(!(expr)) { \
+		switch(ctl::__details_assert::impl(__VA_ARGS__)) { \
+			case ctl::__details_assert::fail::fatal: { \
+				std::abort(); \
+			} break; \
+			case ctl::__details_assert::fail::trap: { \
+				CPA_TRAP; \
+			} break; \
+			case ctl::__details_assert::fail::ignore: { \
+			} break; \
+		} \
+	}
+
+#ifndef NDEBUG
+	#define CTL_DEBUG_ASSERT(...) CTL_ASSERT(__VA_ARGS__)
+#else
+	#define CTL_DEBUG_ASSERT(...)
+#endif

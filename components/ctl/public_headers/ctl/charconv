@@ -1,32 +1,18 @@
 #pragma once
 
-#include "version"
-//#include "variant"
+#include <version>
 #include "type_traits"
-#include "string"
-#include "string_view"
-#include "bit"
+#include <string>
+#include <string_view>
+#include <cuchar>
 #include <charconv>
-#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
-	#include <cuchar>
-#endif
 #include <system_error>
 
-#include "__private/api.hpp"
-
-#if CTL_COMPILER & CTL_COMPILER_FLAG_GCC
-	#define __CTL_WCHAR_WIDTH __WCHAR_WIDTH__
-#else
-	#error
-#endif
+#include "__details/api.h"
 
 namespace ctl
 {
-	class CTL_LOCAL_CLASS literal_variant;
-
-	std::string to_string(const literal_variant &value) = delete;
-
-	namespace __chrconv
+	namespace __details_charconv
 	{
 		template <typename T, typename F>
 		static T to_ustring(std::string_view value, F func) noexcept
@@ -58,7 +44,7 @@ namespace ctl
 			while(it != end) {
 				const typename T::value_type c{*it};
 				std::string cstr;
-				cstr.resize(MB_CUR_MAX);
+				cstr.reserve(MB_CUR_MAX);
 				std::mbstate_t state{};
 				std::size_t res{};
 				while((res = func(cstr.data(), c, &state)) == 0);
@@ -76,7 +62,7 @@ namespace ctl
 		static std::string to_mbchar(T value, F func) noexcept
 		{
 			std::string tmp;
-			tmp.resize(MB_CUR_MAX);
+			tmp.reserve(MB_CUR_MAX);
 			std::mbstate_t state{};
 			func(tmp.data(), value, &state);
 			tmp.shrink_to_fit();
@@ -107,13 +93,13 @@ namespace ctl
 	char8_t to_char<char8_t>(std::string_view value) noexcept = delete;
 	extern CTL_SHARED_API std::u8string CTL_SHARED_API_CALL to_u8char(std::string_view value) noexcept;
 #endif
-#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+#ifndef STDI_UCHAR_MB_UNSUPPORTED
 	template <>
 	inline char16_t to_char<char16_t>(std::string_view value) noexcept
-	{ return __chrconv::to_uchar<char16_t>(value, std::mbrtoc16); }
+	{ return __details_charconv::to_uchar<char16_t>(value, std::mbrtoc16); }
 	template <>
 	inline char32_t to_char<char32_t>(std::string_view value) noexcept
-	{ return __chrconv::to_uchar<char32_t>(value, std::mbrtoc32); }
+	{ return __details_charconv::to_uchar<char32_t>(value, std::mbrtoc32); }
 #else
 	template <>
 	CTL_SHARED_API char16_t CTL_SHARED_API_CALL to_char<char16_t>(std::string_view value) noexcept;
@@ -122,34 +108,34 @@ namespace ctl
 #endif
 	template <>
 	inline wchar_t to_char<wchar_t>(std::string_view value) noexcept
-	{ return __chrconv::to_uchar<wchar_t>(value, std::mbrtowc); }
+	{ return __details_charconv::to_uchar<wchar_t>(value, std::mbrtowc); }
 
 #ifdef __cpp_char8_t
 	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_char(std::u8string_view value) noexcept;
 #endif
-#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+#ifndef STDI_UCHAR_MB_UNSUPPORTED
 	inline std::string to_char(char16_t value) noexcept
-	{ return __chrconv::to_mbchar(value, std::c16rtomb); }
+	{ return __details_charconv::to_mbchar(value, std::c16rtomb); }
 	inline std::string to_char(char32_t value) noexcept
-	{ return __chrconv::to_mbchar(value, std::c32rtomb); }
+	{ return __details_charconv::to_mbchar(value, std::c32rtomb); }
 #else
 	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_char(char16_t value) noexcept;
 	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_char(char32_t value) noexcept;
 #endif
 	inline std::string to_char(wchar_t value) noexcept
-	{ return __chrconv::to_mbchar(value, std::wcrtomb); }
+	{ return __details_charconv::to_mbchar(value, std::wcrtomb); }
 
 #ifdef __cpp_char8_t
 	template <>
 	CTL_SHARED_API std::u8string CTL_SHARED_API_CALL to_string<std::u8string>(std::string_view value) noexcept;
 #endif
-#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+#ifndef STDI_UCHAR_MB_UNSUPPORTED
 	template <>
 	inline std::u16string to_string<std::u16string>(std::string_view value) noexcept
-	{ return __chrconv::to_ustring<std::u16string>(value, std::mbrtoc16); }
+	{ return __details_charconv::to_ustring<std::u16string>(value, std::mbrtoc16); }
 	template <>
 	inline std::u32string to_string<std::u32string>(std::string_view value) noexcept
-	{ return __chrconv::to_ustring<std::u32string>(value, std::mbrtoc32); }
+	{ return __details_charconv::to_ustring<std::u32string>(value, std::mbrtoc32); }
 #else
 	template <>
 	CTL_SHARED_API std::u16string CTL_SHARED_API_CALL to_string<std::u16string>(std::string_view value) noexcept;
@@ -162,11 +148,11 @@ namespace ctl
 #ifdef __cpp_char8_t
 	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_string(std::u8string_view value) noexcept;
 #endif
-#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+#ifndef STDI_UCHAR_MB_UNSUPPORTED
 	inline std::string to_string(std::u16string_view value) noexcept
-	{ return __chrconv::to_mbstring(value, std::c16rtomb); }
+	{ return __details_charconv::to_mbstring(value, std::c16rtomb); }
 	inline std::string to_string(std::u32string_view value) noexcept
-	{ return __chrconv::to_mbstring(value, std::c32rtomb); }
+	{ return __details_charconv::to_mbstring(value, std::c32rtomb); }
 #else
 	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_string(std::u16string_view value) noexcept;
 	extern CTL_SHARED_API std::string CTL_SHARED_API_CALL to_string(std::u32string_view value) noexcept;
@@ -184,15 +170,41 @@ namespace ctl
 	inline std::string to_string(const std::wstring &value) noexcept
 	{ return to_string(static_cast<std::wstring_view>(value)); }
 
-	namespace __chrconv
+	namespace __details_charconv
 	{
 		template <typename T, typename ...Args>
-		static std::errc from_chars(std::string_view str, T &tmp, Args && ...args) noexcept
+		static T from_chars(std::string_view str, Args && ...args) noexcept
 		{
+			T tmp;
+			const char *begin{str.data()};
+			const char *end{str.data()+str.length()};
+			std::from_chars(begin, end, tmp, std::forward<Args>(args)...);
+			return tmp;
+		}
+
+		template <typename T, typename ...Args>
+		static T from_chars_err(std::string_view str, std::errc &err, Args && ...args) noexcept
+		{
+			T tmp;
 			const char *begin{str.data()};
 			const char *end{str.data()+str.length()};
 			std::from_chars_result res{std::from_chars(begin, end, tmp, std::forward<Args>(args)...)};
-			return res.ec;
+			err = res.ec;
+			if(err == std::errc{}) {
+				if(res.ptr != (str.end()-1)) {
+					err = std::errc::invalid_argument;
+				}
+			}
+			return tmp;
+		}
+
+		template <typename T, typename ...Args>
+		static T from_chars_err(std::string_view str, std::error_code &ec, Args && ...args) noexcept
+		{
+			std::errc err;
+			T tmp{from_chars_err<T>(str, err, std::forward<Args>(args)...)};
+			ec = std::make_error_code(err);
+			return tmp;
 		}
 
 		template <typename T, typename ...Args>
@@ -200,74 +212,141 @@ namespace ctl
 		{
 			std::string tmp;
 			std::size_t len{1};
-			tmp.resize(len);
+			tmp.reserve(len);
 			char *begin{const_cast<char *>(tmp.data())};
 			char *end{begin+len};
 			std::to_chars_result res;
 			while(true) {
 				res = std::to_chars(begin, end, value, std::forward<Args>(args)...);
 				if(res.ec == std::errc::value_too_large) {
-					tmp.resize(++len);
+					tmp.reserve(++len);
 					end = (const_cast<char *>(tmp.data())+len);
 				} else if(res.ec == std::errc{}) {
-					break;
-				} else {
-					CTL_DEBUGTRAP;
 					break;
 				}
 			}
 			return tmp;
 		}
 
-	#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
+	#ifdef STDI_CHARCONV_FLOAT_UNSUPPORTED
 		template <typename T>
-		static std::string to_chars_flt_printf(T value) noexcept
+		static std::string to_chars_flt_printf(T value, std::chars_format fmt) noexcept
 		{
+			const char *fmtstr;
+			if constexpr(std::is_same_v<T, long double>) {
+				switch(fmt) {
+					case std::chars_format::general:
+					{ fmtstr = "%Lf"; } break;
+					case std::chars_format::scientific:
+					{ fmtstr = "%Le"; } break;
+					case std::chars_format::fixed:
+					{ fmtstr = "%Lg"; } break;
+					case std::chars_format::hex:
+					{ fmtstr = "%La"; } break;
+				}
+			} else if constexpr(std::is_same_v<T, double>) {
+				switch(fmt) {
+					case std::chars_format::general:
+					{ fmtstr = "%lf"; } break;
+					case std::chars_format::scientific:
+					{ fmtstr = "%le"; } break;
+					case std::chars_format::fixed:
+					{ fmtstr = "%lg"; } break;
+					case std::chars_format::hex:
+					{ fmtstr = "%la"; } break;
+				}
+			} else {
+				switch(fmt) {
+					case std::chars_format::general:
+					{ fmtstr = "%f"; } break;
+					case std::chars_format::scientific:
+					{ fmtstr = "%e"; } break;
+					case std::chars_format::fixed:
+					{ fmtstr = "%g"; } break;
+					case std::chars_format::hex:
+					{ fmtstr = "%a"; } break;
+				}
+			}
 			std::string tmp;
 			if constexpr(std::is_same_v<T, float>) {
-				int ret{std::snprintf(nullptr, 0, "%f", static_cast<double>(value))+1};
+				int ret{std::snprintf(nullptr, 0, fmtstr, static_cast<double>(value))+1};
 				tmp.resize(static_cast<std::size_t>(ret));
-				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), "%f", static_cast<double>(value));
-			} else if constexpr(std::is_same_v<T, double>) {
-				int ret{std::snprintf(nullptr, 0, "%f", value)+1};
-				tmp.resize(static_cast<std::size_t>(ret));
-				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), "%f", value);
-			} else if constexpr(std::is_same_v<T, long double>) {
-				int ret{std::snprintf(nullptr, 0, "%Lf", value)+1};
-				tmp.resize(static_cast<std::size_t>(ret));
-				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), "%Lf", value);
+				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), fmtstr, static_cast<double>(value));
 			} else {
-				CTL_DEBUGTRAP;
+				int ret{std::snprintf(nullptr, 0, fmtstr, value)+1};
+				tmp.resize(static_cast<std::size_t>(ret));
+				std::snprintf(tmp.data(), static_cast<std::size_t>(ret), fmtstr, value);
 			}
 			return tmp;
 		}
 
 		template <typename T, typename F>
-		static std::errc from_chars_flt_strto(std::string_view str, T &tmp, F &&func) noexcept
+		static inline T from_chars_flt_strto_impl(std::string_view str, F &&func) noexcept
+		{ return func(str.data(), nullptr); }
+
+		template <typename T, typename F>
+		static T from_chars_flt_strto_err_impl(std::string_view str, std::error_code &ec, F &&func) noexcept
 		{
 			char *end{nullptr};
-			tmp = func(str.data(), &end);
-			return std::errc{};
+			T tmp{func(str.data(), &end)};
+			if constexpr(std::is_same_v<T, float>) {
+				if(tmp == HUGE_VALF) {
+					ec = std::make_error_code(std::errc::result_out_of_range);
+				}
+			} else if constexpr(std::is_same_v<T, double>) {
+				if(tmp == HUGE_VAL) {
+					ec = std::make_error_code(std::errc::result_out_of_range);
+				}
+			} else if constexpr(std::is_same_v<T, long double>) {
+				if(tmp == HUGE_VALL) {
+					ec = std::make_error_code(std::errc::result_out_of_range);
+				}
+			}
+			if(!ec) {
+				if(end != (str.end()-1)) {
+					ec = std::make_error_code(std::errc::invalid_argument);
+				} else if(end == str.begin()) {
+					ec = std::make_error_code(std::errc::invalid_argument);
+				}
+			}
+			return tmp;
 		}
 
-		static inline std::errc from_chars_flt_strto(std::string_view str, float &tmp) noexcept
-		{ return from_chars_flt_strto(str, tmp, std::strtof); }
-		static inline std::errc from_chars_flt_strto(std::string_view str, double &tmp) noexcept
-		{ return from_chars_flt_strto(str, tmp, std::strtod); }
-		static inline std::errc from_chars_flt_strto(std::string_view str, long double &tmp) noexcept
-		{ return from_chars_flt_strto(str, tmp, std::strtold); }
+		template <typename T>
+		static T from_chars_flt_strto(std::string_view) = delete;
+		template <>
+		inline float from_chars_flt_strto<float>(std::string_view str) noexcept
+		{ return from_chars_flt_strto_impl<float>(str, std::strtof); }
+		template <>
+		inline double from_chars_flt_strto<double>(std::string_view str) noexcept
+		{ return from_chars_flt_strto_impl<double>(str, std::strtod); }
+		template <>
+		inline long double from_chars_flt_strto<long double>(std::string_view str) noexcept
+		{ return from_chars_flt_strto_impl<long double>(str, std::strtold); }
+
+		template <typename T>
+		static T from_chars_flt_strto_err(std::string_view str, std::error_code &ec) = delete;
+		template <>
+		inline float from_chars_flt_strto_err<float>(std::string_view str, std::error_code &ec) noexcept
+		{ return from_chars_flt_strto_err_impl<float>(str, ec, std::strtof); }
+		template <>
+		inline double from_chars_flt_strto_err<double>(std::string_view str, std::error_code &ec) noexcept
+		{ return from_chars_flt_strto_err_impl<double>(str, ec, std::strtod); }
+		template <>
+		inline long double from_chars_flt_strto_err<long double>(std::string_view str, std::error_code &ec) noexcept
+		{ return from_chars_flt_strto_err_impl<long double>(str, ec, std::strtold); }
 	#endif
 
 		template <typename T, typename ...Args>
-		static inline std::string to_chars(T value) noexcept
+		static inline std::string to_chars(Args &&...args) noexcept
 		{
-		#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
+		#ifdef STDI_CHARCONV_FLOAT_UNSUPPORTED
 			if constexpr(std::is_floating_point_v<T>) {
-				return to_chars_flt_printf(value);
+				return to_chars_flt_printf<T>(std::forward<Args>(args)...);
 			} else {
 		#endif
-				return to_chars_impl<T>(value);
-		#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
+				return to_chars_impl<T>(std::forward<Args>(args)...);
+		#ifdef STDI_CHARCONV_FLOAT_UNSUPPORTED
 			}
 		#endif
 		}
@@ -276,45 +355,49 @@ namespace ctl
 	std::string to_string(bool value, int = 10) noexcept = delete;
 	template <typename T>
 	inline std::string to_string(T value) noexcept
-	{ return __chrconv::to_chars(value); }
+	{ return __details_charconv::to_chars<T>(value); }
 	template <typename T>
 	inline std::string to_string(T value, int base) noexcept
-	{ return __chrconv::to_chars(value, base); }
-#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+	{ return __details_charconv::to_chars<T>(value, base); }
+#ifndef STDI_CHARCONV_FLOAT_UNSUPPORTED
 	template <typename T>
 	inline std::string to_string(T value, std::chars_format fmt) noexcept
-	{ return __chrconv::to_chars(value, fmt); }
+	{ return __details_charconv::to_chars<T>(value, fmt); }
 	template <typename T>
 	inline std::string to_string(T value, std::chars_format fmt, int precision) noexcept
-	{ return __chrconv::to_chars(value, fmt, precision); }
+	{ return __details_charconv::to_chars<T>(value, fmt, precision); }
 #else
 	template <typename T>
-	inline std::string to_string(T value, [[maybe_unused]] std::chars_format fmt) noexcept
-	{ return __chrconv::to_chars_flt_printf(value); }
+	inline std::string to_string(T value, std::chars_format fmt) noexcept
+	{ return __details_charconv::to_chars_flt_printf<T>(value, fmt); }
 	template <typename T>
-	inline std::string to_string(T value, [[maybe_unused]] std::chars_format fmt, [[maybe_unused]] int precision) noexcept
-	{ return __chrconv::to_chars_flt_printf(value); }
+	inline std::string to_string(T value, std::chars_format fmt, [[maybe_unused]] int precision) noexcept
+	{ return __details_charconv::to_chars_flt_printf<T>(value, fmt); }
 #endif
 
 	template <typename T = int>
-	T to_integer(std::string_view str, int base = 10) noexcept;
+	inline T to_integer(std::string_view str, int base = 10) noexcept
+	{ return __details_charconv::from_chars<T>(str, base); }
 
 	template <typename T = int>
-	T to_integer(std::string_view str, std::error_code &ec, int base = 10) noexcept;
+	inline T to_integer(std::string_view str, std::error_code &ec, int base = 10) noexcept
+	{ return __details_charconv::from_chars_err<T>(str, ec, base); }
 
-#if CTL_LIBCPP != CTL_LIBCPP_LIBCPP
+#ifndef STDI_CHARCONV_FLOAT_UNSUPPORTED
 	template <typename T = float>
-	T to_floating(std::string_view str, std::chars_format fmt = std::chars_format::general) noexcept;
+	inline T to_floating(std::string_view str, std::chars_format fmt = std::chars_format::general) noexcept
+	{ return __details_charconv::from_chars<T>(str, fmt); }
 
 	template <typename T = float>
-	T to_floating(std::string_view str, std::error_code &ec, std::chars_format fmt = std::chars_format::general) noexcept;
+	inline T to_floating(std::string_view str, std::error_code &ec, std::chars_format fmt = std::chars_format::general) noexcept
+	{ return __details_charconv::from_chars_err<T>(str, ec, fmt); }
 #else
 	template <typename T = float>
-	T to_floating(std::string_view str, [[maybe_unused]] std::chars_format fmt = std::chars_format::general) noexcept;
+	inline T to_floating(std::string_view str, [[maybe_unused]] std::chars_format fmt = std::chars_format::general) noexcept
+	{ return __details_charconv::from_chars_flt_strto<T>(str); }
 
 	template <typename T = float>
-	T to_floating(std::string_view str, [[maybe_unused]] std::error_code &ec, [[maybe_unused]] std::chars_format fmt = std::chars_format::general) noexcept;
+	inline T to_floating(std::string_view str, std::error_code &ec, [[maybe_unused]] std::chars_format fmt = std::chars_format::general) noexcept
+	{ return __details_charconv::from_chars_flt_strto_err<T>(str, ec); }
 #endif
 }
-
-#include "__private/charconv.tpp"

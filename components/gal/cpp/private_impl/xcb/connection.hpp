@@ -3,6 +3,7 @@
 #include <ctl/version>
 #include <ctl/string_view>
 #include <ctl/string>
+#include <ctl/optional>
 #include "atom.hpp"
 #include "screen.hpp"
 #include "xcb.hpp"
@@ -122,6 +123,21 @@ namespace gal::xcb
 		std::vector<absolute_point> desktops_viewport() const noexcept;
 		std::size_t current_desktop() const noexcept;
 
+		inline xcb_render_pictformat_t find_picture_format_id(xcb_pict_standard_t fmt) const noexcept
+		{
+			const xcb_render_pictforminfo_t *info{xcb_render_util_find_standard_format(pic_formats, fmt)};
+			return info ? info->id : static_cast<xcb_render_pictformat_t>(~0u);
+		}
+
+		inline xcb_render_pictformat_t find_picture_format_id(xcb_visualid_t vis) const noexcept
+		{
+			const xcb_render_pictvisual_t *info{xcb_render_util_find_visual_format(pic_formats, vis)};
+			return info ? info->format : static_cast<xcb_render_pictformat_t>(~0u);
+		}
+
+		inline xcb_render_pictformat_t picture_format_alpha8() const noexcept
+		{ return fmt_a8_; }
+
 		template <bool is_ewmh, typename F, typename ...Args>
 		inline auto __reply_func(F &&f, Args && ...args) const noexcept -> typename __conn::result_t<F>::type
 		{
@@ -178,7 +194,8 @@ namespace gal::xcb
 		connection(const connection &) = delete;
 		connection &operator=(const connection &) = delete;
 
-		xcb_render_pictforminfo_t *pic_a8;
+		const xcb_render_query_pict_formats_reply_t *pic_formats;
+		xcb_render_pictformat_t fmt_a8_;
 
 		xcb_connection_t *conn;
 		xcb_ewmh_connection_t ewmh{};

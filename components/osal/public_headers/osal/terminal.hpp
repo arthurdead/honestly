@@ -1,19 +1,21 @@
 #pragma once
 
-#include <ctl/version>
-#include <ctl/optional>
+#include <cpa/compiler_builtins.hpp>
+#include <version>
 #include <ctl/charconv>
-#include <ctl/filesystem>
+#include <filesystem>
+#include <cpa/kernels.h>
 
-#include "__private/api.hpp"
+#include "__details/api.h"
+#include "__details/comment.h"
 
-#if CTL_TARGET_OS == CTL_OS_WINDOWS
+#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 	#include <windows.h>
 #endif
 
 namespace osal
 {
-	namespace __term
+	namespace __details_terminal
 	{
 		#define __OSAL_TERM_CLRS \
 			black = 1, \
@@ -79,7 +81,7 @@ namespace osal
 		{
 		};
 
-		union CTL_LOCAL_CLASS bits_t final {
+		union CPA_LOCAL_CLASS bits_t final {
 		public:
 			constexpr bits_t() noexcept = default;
 			constexpr inline operator bool() const noexcept
@@ -143,7 +145,7 @@ namespace osal
 				using namespace std::literals::string_view_literals;
 				str += (arg ? "true"sv : "false"sv);
 			} else if constexpr(std::is_same_v<decayed_t, std::filesystem::path>) {
-			#ifndef CTL_FILESYSTEM_PATH_WIDE
+			#ifndef STDI_FILESYSTEM_PATH_WIDE
 				str += arg.native();
 			#else
 				str += ctl::to_string(arg.native());
@@ -156,7 +158,7 @@ namespace osal
 				str += tmp;
 			} else if constexpr(std::is_same_v<decayed_t, colors> ||
 								std::is_same_v<decayed_t, effects>) {
-				CTL_DEBUGTRAP;
+				CPA_TRAP;
 			} else if constexpr(std::is_same_v<decayed_t, fg_colors> ||
 								std::is_same_v<decayed_t, bg_colors> ||
 								std::is_same_v<decayed_t, underline_colors> ||
@@ -179,18 +181,18 @@ namespace osal
 		}
 	}
 
-	class CTL_LOCAL_CLASS terminal
+	class CPA_LOCAL_CLASS terminal
 	{
 	public:
-		using colors = __term::colors;
-		using fg_colors = __term::fg_colors;
-		using bg_colors = __term::bg_colors;
-		using underline_colors = __term::underline_colors;
+		using colors = __details_terminal::colors;
+		using fg_colors = __details_terminal::fg_colors;
+		using bg_colors = __details_terminal::bg_colors;
+		using underline_colors = __details_terminal::underline_colors;
 
-		using effects = __term::effects;
-		using enable_effect_t = __term::enable_effect_t;
-		using disable_effect_t = __term::disable_effect_t;
-		static constexpr __term::reset_effects_t reset_effects_{};
+		using effects = __details_terminal::effects;
+		using enable_effect_t = __details_terminal::enable_effect_t;
+		using disable_effect_t = __details_terminal::disable_effect_t;
+		static constexpr __details_terminal::reset_effects_t reset_effects_{};
 
 		template <typename T>
 		terminal &operator<<(const T &arg) noexcept;
@@ -229,22 +231,20 @@ namespace osal
 
 	private:
 		template <typename T>
-		CTL_LOCAL_FUNCTION void process_arg(std::string &str, const T &arg) noexcept
+		CPA_LOCAL_FUNCTION void process_arg(std::string &str, const T &arg) noexcept
 		{
 			static constexpr auto pf{[this](std::string_view view) noexcept -> void { print_impl(view); }};
-			static constexpr auto bf{[this](__term::bits_t bits) noexcept -> void { handle_bits(bits); }};
-			__term::process_arg(str, arg, pf, bf);
+			static constexpr auto bf{[this](__details_terminal::bits_t bits) noexcept -> void { handle_bits(bits); }};
+			__details_terminal::process_arg(str, arg, pf, bf);
 		}
 
-		OSAL_SHARED_API void OSAL_SHARED_API_CALL handle_bits(__term::bits_t bits) noexcept;
+		OSAL_SHARED_API void OSAL_SHARED_API_CALL handle_bits(__details_terminal::bits_t bits) noexcept;
 		OSAL_SHARED_API void OSAL_SHARED_API_CALL print_impl(std::string_view str) noexcept;
 
-	#if CTL_TARGET_OS == CTL_OS_WINDOWS
+	#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 		HANDLE output;
-	#elif CTL_TARGET_OS & CTL_OS_FLAG_POSIX
-		FILE *output;
 	#else
-		#error
+		FILE *output;
 	#endif
 	};
 
@@ -252,12 +252,12 @@ namespace osal
 	{
 		namespace __private
 		{
-			extern OSAL_SHARED_API void OSAL_SHARED_API_CALL handle_bits(__term::bits_t bits) noexcept;
+			extern OSAL_SHARED_API void OSAL_SHARED_API_CALL handle_bits(__details_terminal::bits_t bits) noexcept;
 			extern OSAL_SHARED_API void OSAL_SHARED_API_CALL print_impl(std::string_view str) noexcept;
 
 			template <typename T>
 			static inline void process_arg(std::string &str, const T &arg) noexcept
-			{ __term::process_arg(str, arg, print_impl, handle_bits); }
+			{ __details_terminal::process_arg(str, arg, print_impl, handle_bits); }
 		}
 
 		void set_fg_color(terminal::colors clr) noexcept;
@@ -311,9 +311,9 @@ namespace osal
 		using underline_colors = terminal::underline_colors;
 		using enable_effect = terminal::enable_effect_t;
 		using disable_effect = terminal::disable_effect_t;
-		constexpr __term::reset_effects_t reset_effects;
+		constexpr __details_terminal::reset_effects_t reset_effects;
 
-		OSAL_COMMENT("TODO!!! implement missing")
+		__OSAL_COMMENT("TODO!!! implement missing")
 
 		#define __OSAL_TERM_LIT_FNCS_BEGIN(fnc, nm) \
 			inline void operator"" nm (const char *str, std::size_t len) noexcept \
@@ -339,4 +339,4 @@ namespace osal
 	}
 }
 
-#include "__private/terminal.tpp"
+#include "__details/terminal.tpp"

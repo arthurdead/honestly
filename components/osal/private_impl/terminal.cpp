@@ -1,19 +1,22 @@
 #include <osal/terminal.hpp>
-#include <ctl/memory>
+#include <cpa/kernels.h>
+#include <cpa/os.h>
 
-#if CTL_TARGET_OS == CTL_OS_WINDOWS
+#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 	#include <windows.h>
-#elif CTL_LIBC & CTL_LIBC_FLAG_POSIX
-	#include <unistd.h>
-	#include <ctl/cstdio>
 #else
-	#error
+	#include <cstdio>
+#endif
+
+#if CPA_TARGET_OS & CPA_OS_FLAG_NIX || CPA_TARGET_OS & CPA_OS_FLAG_WINDOWS
+	#define __OSAL_ANSI_CODES_SUPPORTED
 #endif
 
 namespace osal
 {
-	namespace __term
+	namespace __details_terminal
 	{
+	#ifdef __OSAL_ANSI_CODES_SUPPORTED
 		static std::string bits_to_str(bits_t bits) noexcept
 		{
 			using namespace std::literals::string_view_literals;
@@ -75,35 +78,32 @@ namespace osal
 			}
 			return code_str;
 		}
+	#endif
 	}
 
 	namespace this_terminal::__private
 	{
 		OSAL_SHARED_API void OSAL_SHARED_API_CALL print_impl(std::string_view str) noexcept
 		{
-		#if CTL_TARGET_OS == CTL_OS_WINDOWS
+		#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 			static HANDLE out{GetStdHandle(STD_OUTPUT_HANDLE)};
 			#error
 			WriteConsoleA(out, str.data(), str.length(), nullptr, nullptr);
-		#elif CTL_LIBC & CTL_LIBC_FLAG_POSIX
-			#pragma push_macro("stdout")
-			#undef stdout
-			fwrite(str.data(), sizeof(char), str.length(), stdout);
-			#pragma pop_macro("stdout")
 		#else
-			#error
+			fwrite(str.data(), sizeof(char), str.length(), stdout);
 		#endif
 		}
 
-		OSAL_SHARED_API void OSAL_SHARED_API_CALL handle_bits(__term::bits_t bits) noexcept
+		OSAL_SHARED_API void OSAL_SHARED_API_CALL handle_bits(__details_terminal::bits_t bits) noexcept
 		{
-			print_impl(__term::bits_to_str(bits));
-		#if CTL_LIBC & CTL_LIBC_FLAG_POSIX
+		#ifdef __OSAL_ANSI_CODES_SUPPORTED
+			print_impl(__details_terminal::bits_to_str(bits));
+		#else
+			#error
+		#endif
+		#if CPA_TARGET_KERNEL != CPA_KERNEL_WINDOWS
 			if(!bits) {
-				#pragma push_macro("stdout")
-				#undef stdout
 				fflush(stdout);
-				#pragma pop_macro("stdout")
 			}
 		#endif
 		}
@@ -111,15 +111,24 @@ namespace osal
 
 	OSAL_SHARED_API void OSAL_SHARED_API_CALL terminal::print_impl(std::string_view str) noexcept
 	{
-	#if CTL_TARGET_OS == CTL_OS_WINDOWS
+	#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 		WriteConsoleA(output, str.data(), str.length(), nullptr, nullptr);
-	#elif CTL_LIBC & CTL_LIBC_FLAG_POSIX
-		fwrite(str.data(), sizeof(char), str.length(), output);
 	#else
-		#error
+		fwrite(str.data(), sizeof(char), str.length(), output);
 	#endif
 	}
 
-	OSAL_SHARED_API void OSAL_SHARED_API_CALL terminal::handle_bits(__term::bits_t bits) noexcept
-	{ print_impl(__term::bits_to_str(bits)); }
+	OSAL_SHARED_API void OSAL_SHARED_API_CALL terminal::handle_bits(__details_terminal::bits_t bits) noexcept
+	{
+	#ifdef __OSAL_ANSI_CODES_SUPPORTED
+		print_impl(__details_terminal::bits_to_str(bits));
+	#else
+		#error
+	#endif
+	#if CPA_TARGET_KERNEL != CPA_KERNEL_WINDOWS
+		if(!bits) {
+			fflush(output);
+		}
+	#endif
+	}
 }

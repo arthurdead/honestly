@@ -1,6 +1,6 @@
 #pragma once
 
-#include "version"
+#include <cpa/compilers.h>
 #include "type_traits"
 #include <utility>
 
@@ -14,9 +14,9 @@ namespace ctl
 {
 	template <typename D, typename S>
 	constexpr inline D &type_cast(const S &src) noexcept
-#if CTL_COMPILER & CTL_COMPILER_FLAG_ZAPCC
+#if CPA_COMPILER & CPA_COMPILER_FLAG_ZAPCC
 	{ return *reinterpret_cast<D *>(&const_cast<S &>(src)); }
 #else
-	{ return *CTL_BITCAST(D *, &const_cast<S &>(src)); }
+	{ return *CPA_BITCAST(D *, &const_cast<S &>(src)); }
 #endif
 }

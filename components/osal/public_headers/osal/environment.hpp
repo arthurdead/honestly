@@ -1,26 +1,25 @@
 #pragma once
 
-#include <ctl/version>
+#include <cpa/os.h>
 #include <ctl/filesystem>
-#include <ctl/vector>
 #include <ctl/charconv>
-#include <ctl/filesystem>
 
-#include "__private/api.hpp"
+#include "__details/api.h"
 
 namespace osal
 {
-	#if CTL_TARGET_OS == CTL_OS_WINDOWS
+	#if CPA_TARGET_OS & CPA_OS_FLAG_NIX
+		#define __OSAL_ENV_PATH_SEP ':'
+	#elif CPA_TARGET_OS & CPA_OS_FLAG_WINDOWS
 		#define __OSAL_ENV_PATH_SEP ';'
 	#else
-		#define __OSAL_ENV_PATH_SEP ':'
+		#error
 	#endif
 
 	namespace environment
 	{
 		extern OSAL_SHARED_API bool OSAL_SHARED_API_CALL get(std::string_view name, std::string &value) noexcept;
 		extern OSAL_SHARED_API bool OSAL_SHARED_API_CALL get(std::string_view name, bool &value) noexcept;
-		//extern OSAL_SHARED_API bool OSAL_SHARED_API_CALL get(std::string_view name, std::vector<std::filesystem::path> &value, char sep = __OSAL_ENV_PATH_SEP) noexcept;
 
 		template <typename T>
 		inline T get(std::string_view name) noexcept
@@ -41,8 +40,8 @@ namespace osal
 		void set(std::string_view name, bool value) noexcept = delete;
 
 		template <typename T>
-		inline void set(std::string_view name, T value) noexcept
-		{ set(name, ctl::to_string<T>(value)); }
+		inline void set(std::string_view name, T &&value) noexcept
+		{ set(name, ctl::to_string<T>(std::forward<T>(value))); }
 
 		extern OSAL_SHARED_API void OSAL_SHARED_API_CALL remove(std::string_view name) noexcept;
 	}

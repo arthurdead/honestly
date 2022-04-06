@@ -1,22 +1,21 @@
 #pragma once
 
-#include "version"
+#include <cpa/compiler_builtins.hpp>
 #include "type_traits"
 #include "functional"
-#include "bit"
-#include "__private/ctype.h"
+#include <version>
 #include <memory>
 
 namespace ctl
 {
 	template <typename T, typename D = std::default_delete<T>>
-	class CTL_LOCAL_CLASS unique_ptr : public std::unique_ptr<T, D>
+	class CPA_LOCAL_CLASS unique_ptr : public std::unique_ptr<T, D>
 	{
-		using __base = std::unique_ptr<T, D>;
+		using base_type = std::unique_ptr<T, D>;
 
 	public:
-		using element_type = typename __base::element_type;
-		using pointer = typename __base::pointer;
+		using element_type = typename base_type::element_type;
+		using pointer = typename base_type::pointer;
 		using reference = element_type &;
 		using const_reference = const element_type &;
 
@@ -24,16 +23,20 @@ namespace ctl
 		unique_ptr(unique_ptr &&) noexcept = default;
 		unique_ptr &operator=(unique_ptr &&) noexcept = default;
 
-		using __base::unique_ptr;
-		using __base::operator=;
+		using base_type::unique_ptr;
+		using base_type::operator=;
 
 		inline unique_ptr(T &&obj) noexcept
-			: __base{new T{std::move(obj)}}
+			: base_type{new T{std::move(obj)}}
 		{
 		}
 
 		template <typename ...Args>
-		reference emplace(Args && ...args);
+		inline reference emplace(Args && ...args)
+		{
+			base_type::reset(new T{std::forward<Args>(args)...});
+			return *base_type::get();
+		}
 
 		inline auto operator->() const noexcept
 		{
@@ -43,21 +46,21 @@ namespace ctl
 			};
 
 			if constexpr(overloaded_deref) {
-				return __base::operator->()->operator->();
+				return base_type::operator->()->operator->();
 			} else {
-				return __base::operator->();
+				return base_type::operator->();
 			}
 		}
 
 		inline reference ref() const
-		{ return *__base::get(); }
+		{ return *base_type::get(); }
 		inline const_reference cref() const
-		{ return *__base::get(); }
+		{ return *base_type::get(); }
 
-	#ifdef __CTL_GLIBCXX_CONCEPT_CHECKS
+	#ifdef STDI_GLIBCXX_CONCEPT_CHECKS
 	public:
 		constexpr inline void operator=(const unique_ptr &) noexcept
-		{ CTL_DEBUGTRAP; }
+		{ CPA_TRAP; }
 	#else
 	private:
 		unique_ptr &operator=(const unique_ptr &) = delete;
@@ -67,7 +70,7 @@ namespace ctl
 		unique_ptr(const unique_ptr &) = delete;
 	};
 
-	class CTL_LOCAL_CLASS unique_ptr_opaque
+	class CPA_LOCAL_CLASS unique_ptr_opaque
 	{
 	public:
 		unique_ptr_opaque() noexcept = default;
@@ -75,43 +78,52 @@ namespace ctl
 		unique_ptr_opaque &operator=(unique_ptr_opaque &&) noexcept = default;
 
 		template <typename T>
-		unique_ptr_opaque(T *ptr) noexcept;
-		~unique_ptr_opaque() noexcept;
+		inline unique_ptr_opaque(T *new_ptr) noexcept
+			: ptr{new_ptr}, del_func{del_hlpr<T>}
+		{
+		}
+		inline ~unique_ptr_opaque() noexcept
+		{
+			if(del_func && ptr) {
+				del_func(ptr);
+			}
+		}
 
 		template <typename T, typename ...Args>
 		T &emplace(Args && ...args) noexcept;
 
 		void reset(std::nullptr_t = nullptr) noexcept;
 		template <typename T>
-		void reset(T *ptr) noexcept;
+		void reset(T *new_ptr) noexcept;
 
 		template <typename T>
 		inline T &ref() const noexcept
-		{ return *static_cast<T *>(__ptr); }
+		{ return *static_cast<T *>(ptr); }
 		template <typename T>
 		inline const T &cref() const noexcept
-		{ return *static_cast<const T *>(__ptr); }
+		{ return *static_cast<const T *>(ptr); }
 
 		template <typename T>
 		inline T *get() const noexcept
-		{ return static_cast<T *>(__ptr); }
+		{ return static_cast<T *>(ptr); }
 
 		inline explicit operator bool() const noexcept
-		{ return !!__ptr; }
+		{ return !!ptr; }
 
 		template <typename T>
 		inline T &operator*() const noexcept
-		{ return *static_cast<T *>(__ptr); }
+		{ return *static_cast<T *>(ptr); }
 		template <typename T>
 		inline T *operator->() const noexcept
-		{ return static_cast<T *>(__ptr); }
+		{ return static_cast<T *>(ptr); }
 
 		template <typename T>
 		inline T *release() noexcept
 		{
-			T *__tmp{static_cast<T *>(__ptr)};
-			__ptr = nullptr;
-			return __tmp;
+			T *ptr_tmp{static_cast<T *>(ptr)};
+			ptr = nullptr;
+			del_func = nullptr;
+			return ptr_tmp;
 		}
 
 		void swap(unique_ptr_opaque &) = delete;
@@ -120,24 +132,13 @@ namespace ctl
 		unique_ptr_opaque(const unique_ptr_opaque &) = delete;
 		unique_ptr_opaque &operator=(const unique_ptr_opaque &) = delete;
 
-		void *__ptr;
-		std::function<void(void *)> __deleter;
-	};
+		template <typename T>
+		static inline void del_hlpr(void *ptr) noexcept
+		{ delete static_cast<T *>(ptr); }
 
-	template <typename T>
-	class CTL_LOCAL_CLASS ptr_allocator : public std::allocator<ctl::unique_ptr<T>>
-	{
-		friend struct std::allocator_traits<ctl::ptr_allocator<T>>;
-		using __base = std::allocator<ctl::unique_ptr<T>>;
+		void *ptr;
+		void (*del_func)(void *);
 	};
 }
 
-namespace std
-{
-	template <typename T>
-	struct allocator_traits<ctl::ptr_allocator<T>> : std::allocator_traits<typename ctl::ptr_allocator<T>::__base>
-	{
-	};
-}
-
-#include "__private/memory.tpp"
+#include "__details/memory.tpp"

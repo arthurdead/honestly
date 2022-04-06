@@ -1,33 +1,33 @@
 #include <osal/environment.hpp>
 
-#if CTL_TARGET_OS == CTL_OS_WINDOWS
+#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 	#include <windows.h>
-#elif CTL_TARGET_OS & CTL_OS_FLAG_POSIX
-	#include <cstdlib>
 #else
-	#error
+	#include <cstdlib>
+#endif
+
+#if CPA_TARGET_KERNEL & CPA_KERNEL_FLAG_POSIX
+	#include <unistd.h>
 #endif
 
 namespace osal::environment
 {
 	OSAL_SHARED_API bool OSAL_SHARED_API_CALL get(std::string_view name, std::string &value) noexcept
 	{
-	#if CTL_TARGET_OS == CTL_OS_WINDOWS
+	#if CPA_TARGET_KERNEL == CPA_KERNEL_WINDOWS
 		std::size_t len{0};
-		value.resize(len);
+		value.reserve(len);
 		len = static_cast<std::size_t>(GetEnvironmentVariableA(name.data(), value.data(), static_cast<long>(len)));
 		value.resize(len);
 		if(len == 0) {
 			return false;
 		}
-	#elif CTL_TARGET_OS & CTL_OS_FLAG_POSIX
-		char *ptr{std::getenv(name.data())};
+	#else
+		const char *ptr{std::getenv(name.data())};
 		if(!ptr) {
 			return false;
 		}
 		value = ptr;
-	#else
-		#error
 	#endif
 		return true;
 	}
@@ -50,9 +50,9 @@ namespace osal::environment
 			value = false;
 		} else {
 			std::error_code ec;
-			unsigned char i{ctl::to_integer<unsigned char>(str, ec)};
+			const unsigned char i{ctl::to_integer<unsigned char>(str, ec)};
 			if(ec) {
-				value = false;
+				return false;
 			} else {
 				value = static_cast<bool>(i);
 			}
@@ -62,7 +62,7 @@ namespace osal::environment
 
 	OSAL_SHARED_API void OSAL_SHARED_API_CALL remove(std::string_view name) noexcept
 	{
-	#if CTL_TARGET_OS & CTL_OS_FLAG_POSIX
+	#if CPA_TARGET_KERNEL & CPA_KERNEL_FLAG_POSIX
 		unsetenv(name.data());
 	#else
 		#error
@@ -71,8 +71,8 @@ namespace osal::environment
 
 	OSAL_SHARED_API void OSAL_SHARED_API_CALL set(std::string_view name, std::string_view value) noexcept
 	{
-	#if CTL_TARGET_OS & CTL_OS_FLAG_POSIX
-		setenv(name.data(), value.data(), 1);
+	#if CPA_TARGET_KERNEL & CPA_KERNEL_FLAG_POSIX
+		setenv(name.data(), value.data(), true);
 	#else
 		#error
 	#endif

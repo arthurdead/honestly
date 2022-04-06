@@ -3,6 +3,7 @@
 #include <ctl/string_view>
 #include <gal/window.hpp>
 #include <gal/gal.hpp>
+#include <gal/font.hpp>
 #include <osal/terminal.hpp>
 
 #include <gamemode_client.h>
@@ -61,10 +62,12 @@ int application_main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[], [
 		return 5;
 	}*/
 
-	gal::window test{1600, 900};
+	gal::window test{gal::dimension{1600, 900}};
 	gal::pen tpen{test};
 
-	test.draw = [&tpen]() noexcept -> void {
+	gal::font fnt{*gal::query_font(""sv)};
+
+	test.draw = [&tpen,&fnt,&test]() noexcept -> void {
 		tpen.point({
 			gal::point{10, 10},
 			gal::point{10, 20},
@@ -89,6 +92,8 @@ int application_main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[], [
 			gal::arc{10, 100, 60, 40, {0, 90 << 6}},
 			gal::arc{90, 100, 55, 40, {0, 270 << 6}}
 		}, false);
+		gal::glyph_set glyps{fnt.compose("test"sv)};
+		glyps.render(test, 0, 0);
 	};
 
 	bool should_quit{false};

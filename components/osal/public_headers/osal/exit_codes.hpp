@@ -1,10 +1,42 @@
 #pragma once
 
-#include <ctl/version>
+#include <features.h>
 #include <cstdlib>
 
-#if CTL_LIBC & CTL_LIBC_FLAG_GNU
+#if STDI_C_STDLIB & STDI_C_STDLIB_FLAG_NIX
 	#include <sysexits.h>
+
+	#define __OSAL_EX_USAGE EX_USAGE
+	#define __OSAL_EX_DATAERR EX_DATAERR
+	#define __OSAL_EX_NOINPUT EX_NOINPUT
+	#define __OSAL_EX_NOUSER EX_NOUSER
+	#define __OSAL_EX_NOHOST EX_NOHOST
+	#define __OSAL_EX_UNAVAILABLE EX_UNAVAILABLE
+	#define __OSAL_EX_SOFTWARE EX_SOFTWARE
+	#define __OSAL_EX_OSERR EX_OSERR
+	#define __OSAL_EX_OSFILE EX_OSFILE
+	#define __OSAL_EX_CANTCREAT EX_CANTCREAT
+	#define __OSAL_EX_IOERR EX_IOERR
+	#define __OSAL_EX_TEMPFAIL EX_TEMPFAIL
+	#define __OSAL_EX_PROTOCOL EX_PROTOCOL
+	#define __OSAL_EX_NOPERM EX_NOPERM
+	#define __OSAL_EX_CONFIG EX_CONFIG
+#else
+	#define __OSAL_EX_USAGE       64
+	#define __OSAL_EX_DATAERR     65
+	#define __OSAL_EX_NOINPUT     66
+	#define __OSAL_EX_NOUSER      67
+	#define __OSAL_EX_NOHOST      68
+	#define __OSAL_EX_UNAVAILABLE 69
+	#define __OSAL_EX_SOFTWARE    70
+	#define __OSAL_EX_OSERR       71
+	#define __OSAL_EX_OSFILE      72
+	#define __OSAL_EX_CANTCREAT   73
+	#define __OSAL_EX_IOERR       74
+	#define __OSAL_EX_TEMPFAIL    75
+	#define __OSAL_EX_PROTOCOL    76
+	#define __OSAL_EX_NOPERM      77
+	#define __OSAL_EX_CONFIG      78
 #endif
 
 namespace osal
@@ -13,40 +45,20 @@ namespace osal
 	{
 		success = EXIT_SUCCESS,
 		unknown_failure = EXIT_FAILURE,
-	#if CTL_TARGET_OS == CTL_OS_WINDOWS
-		usage_error = 64,
-		input_invalid = 65,
-		input_unavailable = 66,
-		user_unavailable = 67,
-		host_unavailable = 68,
-		resource_unavailable = 69,
-		internal_failure = 70,
-		os_error = 71,
-		os_resource_unavailable = 72,
-		output_unavailable = 73,
-		io_error = 74,
-		tryagain = 75,
-		remote_error = 76,
-		permission_error = 77,
-		config_error = 78,
-	#elif CTL_LIBC & CTL_LIBC_FLAG_GNU
-		usage_error = EX_USAGE,
-		input_invalid = EX_DATAERR,
-		input_unavailable = EX_NOINPUT,
-		user_unavailable = EX_NOUSER,
-		host_unavailable = EX_NOHOST,
-		resource_unavailable = EX_UNAVAILABLE,
-		internal_failure = EX_SOFTWARE,
-		os_error = EX_OSERR,
-		os_resource_unavailable = EX_OSFILE,
-		output_unavailable = EX_CANTCREAT,
-		io_error = EX_IOERR,
-		tryagain = EX_TEMPFAIL,
-		remote_error = EX_PROTOCOL,
-		permission_error = EX_NOPERM,
-		config_error = EX_CONFIG,
-	#else
-		#error
-	#endif
+		usage_error = __OSAL_EX_USAGE,
+		input_invalid = __OSAL_EX_DATAERR,
+		input_unavailable = __OSAL_EX_NOINPUT,
+		user_unavailable = __OSAL_EX_NOUSER,
+		host_unavailable = __OSAL_EX_NOHOST,
+		resource_unavailable = __OSAL_EX_UNAVAILABLE,
+		internal_failure = __OSAL_EX_SOFTWARE,
+		os_error = __OSAL_EX_OSERR,
+		os_resource_unavailable = __OSAL_EX_OSFILE,
+		output_unavailable = __OSAL_EX_CANTCREAT,
+		io_error = __OSAL_EX_IOERR,
+		try_again = __OSAL_EX_TEMPFAIL,
+		remote_error = __OSAL_EX_PROTOCOL,
+		permission_error = __OSAL_EX_NOPERM,
+		config_error = __OSAL_EX_CONFIG
 	};
 }

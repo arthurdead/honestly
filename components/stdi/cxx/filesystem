@@ -1,0 +1,23 @@
+#pragma once
+
+#include <cpa/compilers.h>
+
+#define __STDI_INCLUDE_NEXT_HEADER <filesystem>
+#include "__details/include_next.h"
+
+#ifndef __STDI_FILESYSTEM_HPP
+	#include "version"
+
+	#if STDI_CXX_STDLIB == STDI_STDLIB_LIBCPP
+		#ifdef _LIBCPP_WIN32API
+			#define STDI_FILESYSTEM_PATH_WIDE
+		#endif
+	#elif STDI_CXX_STDLIB == STDI_STDLIB_GLIBCXX
+		#ifdef _GLIBCXX_FILESYSTEM_IS_WINDOWS
+			#define STDI_FILESYSTEM_PATH_WIDE
+		#endif
+	#else
+		#error
+	#endif
+#define __STDI_FILESYSTEM_HPP
+#endif

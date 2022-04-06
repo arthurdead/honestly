@@ -23,6 +23,9 @@ namespace gal::xcb
 		monitor_dimension primary_monitor() const noexcept;
 		std::vector<monitor_info> monitors() const noexcept;
 
+		inline xcb_render_pictformat_t picture_format_id() const noexcept
+		{ return pic_fmt; }
+
 		void destroy_root_win() noexcept;
 
 		using assign_pair_t = std::pair<xcb_screen_t *, connection &>;
@@ -44,8 +47,11 @@ namespace gal::xcb
 		screen(const screen &) noexcept = delete;
 		screen &operator=(const screen &) noexcept = delete;
 
+		void init() noexcept;
+
 		xcb_screen_t *scrn;
 		connection *conn;
 		ctl::unique_ptr<window> root_win;
+		xcb_render_pictformat_t pic_fmt;
 	};
 }

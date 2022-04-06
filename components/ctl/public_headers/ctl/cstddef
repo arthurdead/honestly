@@ -1,9 +1,8 @@
 #pragma once
 
-#include "version"
-#include "cstddef"
+#include <cstddef>
 #include "utility"
-#include "type_traits"
+#include <type_traits>
 
 #define __CTL_FLAG_ENM_FNCS_IMPL(frnd, flags) \
 	frnd constexpr inline flags operator&(flags rhs, flags lhs) noexcept \

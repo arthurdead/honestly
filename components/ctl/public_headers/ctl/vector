@@ -1,9 +1,10 @@
 #pragma once
 
-#include "version"
 #include "memory"
 #include "utility"
 #include <vector>
+#include <cpa/compiler_builtins.hpp>
+#include "__details/comment.h"
 
 #define CTL_REMAP_VECTOR_ACCESSORS_NOSUBSCRIPT(T, vec) \
 	using iterator = typename T::iterator; \
@@ -65,113 +66,119 @@
 namespace ctl
 {
 	template <typename T>
-	class CTL_LOCAL_CLASS ptr_vector : private std::vector<ctl::unique_ptr<T>, ptr_allocator<T>>
+	class CPA_LOCAL_CLASS ptr_vector : private std::vector<ctl::unique_ptr<T>>
 	{
-		using __alloc = ptr_allocator<T>;
-		using __ptrtype = ctl::unique_ptr<T>;
-		using __base = std::vector<__ptrtype, __alloc>;
+		using ptr_type = ctl::unique_ptr<T>;
+		using base_type = std::vector<ptr_type>;
 
-		using __itbase = typename __base::iterator;
-		using __citbase = typename __base::const_iterator;
+		using base_it_type = typename base_type::iterator;
+		using base_cit_type = typename base_type::const_iterator;
 
-		using __initit = typename std::initializer_list<T>::iterator;
+		using init_it_type = typename std::initializer_list<T>::iterator;
 
 	public:
-		using size_type = typename __base::size_type;
+		using allocator_type = typename base_type::allocator_type;
+		using size_type = typename base_type::size_type;
 		using value_type = T;
 		using reference = T &;
 		using const_reference = const T &;
 		using pointer = T *;
 		using const_pointer = const T *;
 
-		class CTL_LOCAL_CLASS iterator : public __itbase
+		class CPA_LOCAL_CLASS iterator : public base_it_type
 		{
 		public:
 			inline reference operator*() const
-			{ return *__itbase::operator*(); }
+			{ return *base_it_type::operator*(); }
 			inline pointer operator->() const
-			{ return __itbase::operator*().get(); }
+			{ return base_it_type::operator*().get(); }
 		};
 
-		class CTL_LOCAL_CLASS const_iterator : public __citbase
+		class CPA_LOCAL_CLASS const_iterator : public base_cit_type
 		{
 		public:
 			inline const_reference operator*() const
-			{ return *__citbase::operator*(); }
+			{ return *base_cit_type::operator*(); }
 			inline const_pointer operator->() const
-			{ return __citbase::operator*().get(); }
+			{ return base_cit_type::operator*().get(); }
 		};
 
 		using reverse_iterator = std::reverse_iterator<iterator>;
 		using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-		constexpr ptr_vector() noexcept(noexcept(__alloc{})) = default;
-		constexpr inline explicit ptr_vector(const __alloc &alloc) noexcept
-			: __base{alloc} {}
-
-		constexpr ptr_vector(size_type count, const T &value, const __alloc &alloc = __alloc{})
-			: __base{count, alloc}
+		constexpr ptr_vector() noexcept(noexcept(allocator_type{})) = default;
+		constexpr inline explicit ptr_vector(const allocator_type &alloc) noexcept
+			: base_type{alloc}
 		{
-			for(size_type i{0}, len{__base::size()}; i < len; ++i) {
-				__base::operator[](i).reset(new T{value});
+		}
+
+		constexpr ptr_vector(size_type count, const T &value, const allocator_type &alloc = allocator_type{})
+			: base_type{count, alloc}
+		{
+			const size_type len{base_type::size()};
+			for(size_type i{0}; i < len; ++i) {
+				base_type::operator[](i).reset(new T{value});
 			}
 		}
 
-		constexpr explicit ptr_vector(size_type count, const __alloc &alloc = __alloc{})
-			: __base{count, alloc}
+		constexpr explicit ptr_vector(size_type count, const allocator_type &alloc = allocator_type{})
+			: base_type{count, alloc}
 		{
-			for(size_type i{0}, len{__base::size()}; i < len; ++i) {
-				__base::operator[](i).reset(new T);
+			const size_type len{base_type::size()};
+			for(size_type i{0}; i < len; ++i) {
+				base_type::operator[](i).reset(new T);
 			}
 		}
 
 		__CTL_COMMENT("TODO!!! undelete below")
 
 		template <typename I>
-		ptr_vector(I, I, const __alloc & = __alloc{}) = delete;
+		ptr_vector(I, I, const allocator_type & = allocator_type{}) = delete;
 
 		constexpr ptr_vector(const ptr_vector &other)
-			: __base{}
+			: base_type{}
 		{
 			const size_type len{other.size()};
-			__base::resize(len);
+			base_type::resize(len);
 			for(size_type i{0}; i < len; ++i) {
-				__base::operator[](i).reset(new T{*other.__base::operator[](i)});
+				base_type::operator[](i).reset(new T{*other.base_type::operator[](i)});
 			}
 		}
 
-		constexpr ptr_vector(const ptr_vector &other, const __alloc &alloc)
-			: __base{alloc}
+		constexpr ptr_vector(const ptr_vector &other, const allocator_type &alloc)
+			: base_type{alloc}
 		{
 			const size_type len{other.size()};
-			__base::resize(len);
+			base_type::resize(len);
 			for(size_type i{0}; i < len; ++i) {
-				__base::operator[](i).reset(new T{*other.__base::operator[](i)});
+				base_type::operator[](i).reset(new T{*other.base_type::operator[](i)});
 			}
 		}
 
 		constexpr ptr_vector(ptr_vector &&other) noexcept = default;
 
-		constexpr inline ptr_vector(ptr_vector &&other, const __alloc &alloc)
-			: __base{std::move(other), alloc} {}
+		constexpr inline ptr_vector(ptr_vector &&other, const allocator_type &alloc)
+			: base_type{std::move(other), alloc}
+		{
+		}
 
-		constexpr ptr_vector(std::initializer_list<T> init, const __alloc &alloc = __alloc{})
-			: __base{alloc}
+		constexpr ptr_vector(std::initializer_list<T> init, const allocator_type &alloc = allocator_type{})
+			: base_type{alloc}
 		{
 			const size_type len{init.size()};
-			__base::resize(len);
-			__initit init_begin{init.begin()};
+			base_type::resize(len);
+			init_it_type init_begin{init.begin()};
 			for(size_type i{0}; i < len; ++i, ++init_begin) {
-				__base::operator[](i).reset(new T{*init_begin});
+				base_type::operator[](i).reset(new T{*init_begin});
 			}
 		}
 
 		constexpr ptr_vector &operator=(const ptr_vector &other)
 		{
-			size_type len{other.size()};
-			__base::resize(len);
+			const size_type len{other.size()};
+			base_type::resize(len);
 			for(size_type i{0}; i < len; ++i) {
-				__base::operator[](i).reset(new T{*other.__base::operator[](i)});
+				base_type::operator[](i).reset(new T{*other.base_type::operator[](i)});
 			}
 			return *this;
 		}
@@ -183,9 +190,9 @@ namespace ctl
 
 		constexpr void assign(size_type count, const T &value)
 		{
-			__base::resize(count);
+			base_type::resize(count);
 			for(size_type i{0}; i < count; ++i) {
-				__base::operator[](i).reset(new T{value});
+				base_type::operator[](i).reset(new T{value});
 			}
 		}
 
@@ -197,80 +204,80 @@ namespace ctl
 		constexpr void assign(std::initializer_list<T> ilist)
 		{
 			const size_type len{ilist.size()};
-			__base::resize(len);
-			__initit listbegin{ilist.begin()};
+			base_type::resize(len);
+			init_it_type listbegin{ilist.begin()};
 			for(size_type i{0}; i < len; ++i, ++listbegin) {
-				__base::operator[](i).reset(new T{*listbegin});
+				base_type::operator[](i).reset(new T{*listbegin});
 			}
 		}
 
 		constexpr inline reference at(size_type pos)
-		{ return *__base::at(pos); }
+		{ return *base_type::at(pos); }
 		constexpr inline const_reference at(size_type pos) const
-		{ return *__base::at(pos); }
+		{ return *base_type::at(pos); }
 
 		constexpr inline reference operator[](size_type pos)
-		{ return *__base::operator[](pos); }
+		{ return *base_type::operator[](pos); }
 		constexpr inline const_reference operator[](size_type pos) const
-		{ return *__base::operator[](pos); }
+		{ return *base_type::operator[](pos); }
 
 		constexpr inline reference front()
-		{ return *__base::front(); }
+		{ return *base_type::front(); }
 		constexpr inline const_reference front() const
-		{ return *__base::front(); }
+		{ return *base_type::front(); }
 
 		constexpr inline reference back()
-		{ return *__base::back(); }
+		{ return *base_type::back(); }
 		constexpr inline const_reference back() const
-		{ return *__base::back(); }
+		{ return *base_type::back(); }
 
 		T *data() = delete;
 		const T *data() const = delete;
 
 		constexpr inline iterator begin() noexcept
-		{ return type_cast<iterator>(__base::begin()); }
+		{ return type_cast<iterator>(base_type::begin()); }
 		constexpr inline const_iterator begin() const noexcept
-		{ return type_cast<const_iterator>(__base::begin()); }
+		{ return type_cast<const_iterator>(base_type::begin()); }
 		constexpr inline const_iterator cbegin() const noexcept
-		{ return type_cast<const_iterator>(__base::begin()); }
+		{ return type_cast<const_iterator>(base_type::begin()); }
 		constexpr inline iterator end() noexcept
-		{ return type_cast<iterator>(__base::end()); }
+		{ return type_cast<iterator>(base_type::end()); }
 		constexpr inline const_iterator end() const noexcept
-		{ return type_cast<const_iterator>(__base::end()); }
+		{ return type_cast<const_iterator>(base_type::end()); }
 		constexpr inline const_iterator cend() const noexcept
-		{ return type_cast<const_iterator>(__base::cend()); }
+		{ return type_cast<const_iterator>(base_type::cend()); }
 		constexpr inline reverse_iterator rbegin() noexcept
-		{ return type_cast<reverse_iterator>(__base::rbegin()); }
+		{ return type_cast<reverse_iterator>(base_type::rbegin()); }
 		constexpr inline const_reverse_iterator rbegin() const noexcept
-		{ return type_cast<const_reverse_iterator>(__base::rbegin()); }
+		{ return type_cast<const_reverse_iterator>(base_type::rbegin()); }
 		constexpr inline const_reverse_iterator crbegin() const noexcept
-		{ return type_cast<const_reverse_iterator>(__base::crbegin()); }
+		{ return type_cast<const_reverse_iterator>(base_type::crbegin()); }
 		constexpr inline reverse_iterator rend() noexcept
-		{ return type_cast<reverse_iterator>(__base::rend()); }
+		{ return type_cast<reverse_iterator>(base_type::rend()); }
 		constexpr inline const_reverse_iterator rend() const noexcept
-		{ return type_cast<const_reverse_iterator>(__base::rend()); }
+		{ return type_cast<const_reverse_iterator>(base_type::rend()); }
 		constexpr inline const_reverse_iterator crend() const noexcept
-		{ return type_cast<const_reverse_iterator>(__base::crend()); }
+		{ return type_cast<const_reverse_iterator>(base_type::crend()); }
 
-		using __base::empty;
-		using __base::size;
-		using __base::max_size;
-		using __base::reserve;
-		using __base::capacity;
-		using __base::shrink_to_fit;
-		using __base::clear;
+		using base_type::empty;
+		using base_type::size;
+		using base_type::max_size;
+		using base_type::reserve;
+		using base_type::capacity;
+		using base_type::shrink_to_fit;
+		using base_type::clear;
 
 		constexpr inline iterator insert(const_iterator pos, const T &value)
-		{ return __base::insert(pos, new T{value}); }
+		{ return base_type::insert(pos, new T{value}); }
 		constexpr inline iterator insert(const_iterator pos, T &&value)
-		{ return __base::insert(pos, new T{std::move(value)}); }
+		{ return base_type::insert(pos, new T{std::move(value)}); }
 
 		constexpr iterator insert(const_iterator pos, size_type count, const T &value)
 		{
 			__CTL_COMMENT("TODO!!! do this smarter")
 
-			__ptrtype ignore;
-			iterator ret{__base::insert(pos, count, std::move(ignore))};
+			ptr_type ignore;
+			iterator ret{base_type::insert(pos, count, std::move(ignore))};
 			iterator tmp{ret};
 			for(size_type i{0}; i < count; ++i, ++tmp) {
 				tmp->reset(new T{value});
@@ -287,11 +294,11 @@ namespace ctl
 		{
 			__CTL_COMMENT("TODO!!! do this smarter")
 
-			size_type len{ilist.size()};
-			__ptrtype ignore;
-			iterator ret{__base::insert(pos, len, std::move(ignore))};
+			const size_type len{ilist.size()};
+			ptr_type ignore;
+			iterator ret{base_type::insert(pos, len, std::move(ignore))};
 			iterator tmp{ret};
-			__initit listbegin{ilist.begin()};
+			init_it_type listbegin{ilist.begin()};
 			for(size_type i{0}; i < len; ++i, ++tmp, ++listbegin) {
 				tmp->reset(new T{*listbegin});
 			}
@@ -300,48 +307,48 @@ namespace ctl
 
 		template <typename ...Args>
 		constexpr inline iterator emplace(const_iterator pos, Args && ...args)
-		{ return __base::emplace(pos, new T{std::forward<Args>(args)...}); }
+		{ return base_type::emplace(pos, new T{std::forward<Args>(args)...}); }
 
 		constexpr inline iterator erase(iterator pos)
-		{ return type_cast<iterator>(__base::erase(type_cast<__itbase>(pos))); }
+		{ return type_cast<iterator>(base_type::erase(type_cast<base_it_type>(pos))); }
 
 		constexpr inline iterator erase(iterator first, iterator last)
-		{ return type_cast<iterator>(__base::erase(type_cast<__itbase>(first), type_cast<__itbase>(last))); }
+		{ return type_cast<iterator>(base_type::erase(type_cast<base_it_type>(first), type_cast<base_it_type>(last))); }
 
 		constexpr inline iterator erase(const_iterator pos)
-		{ return type_cast<iterator>(__base::erase(type_cast<__citbase>(pos))); }
+		{ return type_cast<iterator>(base_type::erase(type_cast<base_cit_type>(pos))); }
 		constexpr inline iterator erase(const_iterator first, const_iterator last)
-		{ return type_cast<iterator>(__base::erase(type_cast<__citbase>(first), type_cast<__citbase>(last))); }
+		{ return type_cast<iterator>(base_type::erase(type_cast<base_cit_type>(first), type_cast<base_cit_type>(last))); }
 
 		constexpr inline void push_back(const T &value)
-		{ __base::push_back(new T{value}); }
+		{ base_type::push_back(new T{value}); }
 		constexpr inline void push_back(T &&value)
-		{ __base::push_back(new T{std::move(value)}); }
+		{ base_type::push_back(new T{std::move(value)}); }
 
 		template <typename ...Args>
 		constexpr inline reference emplace_back(Args && ...args)
-		{ return *__base::emplace_back(new T{std::forward<Args>(args)...}); }
+		{ return *base_type::emplace_back(new T{std::forward<Args>(args)...}); }
 
-		using __base::pop_back;
+		using base_type::pop_back;
 
 		constexpr void resize(size_type count)
 		{
-			size_type oldlen{__base::size()};
-			__base::resize(count);
+			const size_type oldlen{base_type::size()};
+			base_type::resize(count);
 			if(count > oldlen) {
 				for(size_type i{oldlen}; i < count; ++i) {
-					__base::operator[](i).reset(new T);
+					base_type::operator[](i).reset(new T);
 				}
 			}
 		}
 
 		constexpr void resize(size_type count, const value_type &value)
 		{
-			size_type oldlen{__base::size()};
-			__base::resize(count);
+			const size_type oldlen{base_type::size()};
+			base_type::resize(count);
 			if(count > oldlen) {
 				for(size_type i{oldlen}; i < count; ++i) {
-					__base::operator[](i).reset(new T{value});
+					base_type::operator[](i).reset(new T{value});
 				}
 			}
 		}

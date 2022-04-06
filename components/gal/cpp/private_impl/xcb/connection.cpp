@@ -26,21 +26,23 @@ namespace gal::xcb
 			osal::this_terminal::error(mjcode);
 
 			if(mn_code) {
-				osal::this_terminal::error(" "sv,mjcode);
+				osal::this_terminal::error(' ',mjcode);
 			}
 
-			osal::this_terminal::error(" "sv);
+			osal::this_terminal::error(' ');
 		}
 
 		if(errstr) {
 			osal::this_terminal::error(errstr);
 
 			if(ext) {
-				osal::this_terminal::error(ext);
+				osal::this_terminal::error(' ',ext);
 			}
 		}
 
 		osal::this_terminal::print('\n');
+
+		CTL_DEBUGTRAP;
 	}
 #endif
 
@@ -79,9 +81,9 @@ namespace gal::xcb
 
 		__GAL_XCB_CONN_ICCCM_ATOMS
 
-		const xcb_render_query_pict_formats_reply_t *pic_formats{xcb_render_util_query_formats(conn)};
+		pic_formats = xcb_render_util_query_formats(conn);
 
-		pic_a8 = xcb_render_util_find_standard_format(pic_formats, XCB_PICT_STANDARD_A_8);
+		fmt_a8_ = find_picture_format_id(XCB_PICT_STANDARD_A_8);
 	}
 
 	connection::~connection() noexcept
@@ -192,7 +194,22 @@ namespace gal::xcb
 	}
 
 	bool connection::poll(generic_event &dst) const noexcept
-	{ return !!(dst.evnt = xcb_poll_for_event(conn)); }
+	{
+		xcb_generic_event_t *ptr{xcb_poll_for_event(conn)};
+		dst.evnt = ptr;
+	#if CTL_DEBUG_LEVEL > 0
+		if(ptr) {
+			const char *ext{nullptr};
+			const char *name{xcb_errors_get_name_for_xcb_event(errctx, ptr, &ext)};
+			osal::this_terminal::info(name);
+			if(ext) {
+				osal::this_terminal::info(' ',ext);
+			}
+			osal::this_terminal::info('\n');
+		}
+	#endif
+		return !!ptr;
+	}
 
 	connection::screen_t connection::screen(std::size_t i) noexcept
 	{ return screen_t{ewmh.screens[i], *this}; }

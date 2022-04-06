@@ -8,14 +8,12 @@ export CPATH=$CPATH:$reflex_root'/include'
 export __TMP_HACK_REFLEX_LIB_DIR=$reflex_root'/lib'
 export __TMP_HACK_REFLEX_INC_DIR=$reflex_root'/include'
 
-./workspace/ninja/configure.sh '.' $(pwd)'/artifacts' $@
+./components/anc/configure.sh $(pwd)'/workspace/anc' $(pwd)'/artifacts' $@
 code=$?
 if [[ $code != 0 ]]; then
 	exit $code
 fi
 
-./workspace/ninja/remove_warned.sh $(pwd)'/artifacts'
-#ninja -f $(pwd)'/artifacts/build.ninja' -t compdb > $(pwd)'/artifacts/compile_commands.json'
-#ninja -f $(pwd)'/artifacts/build.ninja' -j 6
-samu -f $(pwd)'/artifacts/build.ninja' -j 6
+./components/anc/remove_warned.sh $(pwd)'/artifacts'
+samu -f$(pwd)'/artifacts/build.ninja' -j6
 exit $?

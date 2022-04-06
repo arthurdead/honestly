@@ -1,0 +1,24 @@
+#pragma once
+
+#include <cpa/compilers.h>
+
+#define __STDI_INCLUDE_NEXT_HEADER <string>
+#include "__details/include_next.h"
+
+#ifndef __STDI_STRING_HPP
+	#include <cpa/compiler_builtins.hpp>
+	#include "version"
+	#include "__details/comment.h"
+
+	__STDI_COMMENT("TODO!!! std::basic_string::data is const in libc++")
+
+	#ifndef __cpp_char8_t
+namespace std
+{
+	class CPA_LOCAL_CLASS u8string : public std::string
+	{
+	};
+}
+	#endif
+#define __STDI_STRING_HPP
+#endif

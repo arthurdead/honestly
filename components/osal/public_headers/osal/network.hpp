@@ -1,9 +1,8 @@
 #pragma once
 
-#include <ctl/version>
-#include <ctl/string>
+#include <string>
 
-#include "__private/api.hpp"
+#include "__details/api.h"
 
 namespace osal
 {

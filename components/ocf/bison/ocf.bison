@@ -165,10 +165,12 @@ object_namespace_header:
 		if(!__drv.push_namespace(std::move($1))) {
 			YYABORT;
 		}
-	}
+	} |
+	object_group_group
 
 object_namespace.loop:
 	object_namespace_header DOUBLE_COLON object_namespace_header DOUBLE_COLON object_namespace.loop |
+	object_namespace_header DOUBLE_COLON object_namespace_header DOUBLE_COLON object_namespace_header |
 	object_namespace_header DOUBLE_COLON object_namespace_header
 
 object_namespace:
@@ -208,6 +210,9 @@ object_group:
 			YYABORT;
 		}
 	}
+
+object_group_group:
+	OPEN_PARENTHESIS object_group CLOSE_PARENTHESIS
 
 this:
 	THIS {
@@ -269,7 +274,8 @@ object_end:
 	EQUAL object_body |
 	object_attributes object_body.opt |
 	object_body |
-	EQUAL object_array
+	EQUAL object_array |
+	object_array
 
 object_end_simple:
 	object_end |
@@ -296,25 +302,11 @@ object_section_begin:
 		if(!__drv.after_section(false)) {
 			YYABORT;
 		}
-	} |
-	OPEN_PARENTHESIS {
-		if(!__drv.pre_section(true)) {
-			YYABORT;
-		}
-	} object_section_header CLOSE_PARENTHESIS {
-		if(!__drv.after_section(true)) {
-			YYABORT;
-		}
 	}
 
 object_section_end:
 	LESSER GREATER {
 		if(!__drv.end_section(false)) {
-			YYABORT;
-		}
-	} |
-	OPEN_PARENTHESIS CLOSE_PARENTHESIS {
-		if(!__drv.end_section(true)) {
 			YYABORT;
 		}
 	}

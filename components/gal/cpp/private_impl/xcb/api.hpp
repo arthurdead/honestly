@@ -18,10 +18,13 @@
 #endif
 
 #include "../window.hpp"
+#include "../font.hpp"
 
 namespace gal::xcb
 {
-	extern GAL_XCB_SHARED_API __win::impl * GAL_XCB_SHARED_API_CALL create_window(ctl::optional_ref<gal::window> usr_win, std::size_t x, std::size_t y, std::size_t w, std::size_t h) noexcept;
+	extern GAL_XCB_SHARED_API __win::impl * GAL_XCB_SHARED_API_CALL create_window(ctl::optional_ref<gal::window> usr_win, absolute_rectangle rect) noexcept;
+
+	extern GAL_XCB_SHARED_API __font::glyphs_impl * GAL_XCB_SHARED_API_CALL create_glyphs(__font::impl &font, const __font::shape_impl &shape) noexcept;
 
 	extern GAL_XCB_SHARED_API void GAL_XCB_SHARED_API_CALL set_software_info(const software_list &info) noexcept;
 

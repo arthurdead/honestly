@@ -8,15 +8,20 @@ namespace gal::xcb
 
 	screen::screen(xcb_screen_t *ptr, connection &conn_) noexcept
 		: scrn{ptr}, conn{&conn_}, root_win{new window{scrn->root, *conn, *this}}
-	{
-	}
+	{ init(); }
 
 	screen &screen::operator=(assign_pair_t pair) noexcept
 	{
 		conn = &pair.second;
 		scrn = pair.first;
 		root_win.emplace(scrn->root, *conn, *this);
+		init();
 		return *this;
+	}
+
+	void screen::init() noexcept
+	{
+		pic_fmt = conn->find_picture_format_id(scrn->root_visual);
 	}
 
 	monitor_dimension screen::primary_monitor() const noexcept

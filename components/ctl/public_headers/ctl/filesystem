@@ -1,22 +1,7 @@
 #pragma once
 
-#include "version"
-#include "type_traits"
-#include "chrono"
-#include "__private/ctype.h"
 #include <filesystem>
-
-#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
-	#if defined _LIBCPP_WIN32API
-		#define CTL_FILESYSTEM_PATH_WIDE
-	#endif
-#elif CTL_LIBCPP == CTL_LIBCPP_GLIBCXX
-	#if defined _GLIBCXX_FILESYSTEM_IS_WINDOWS
-		#define CTL_FILESYSTEM_PATH_WIDE
-	#endif
-#else
-	#error
-#endif
+#include <string_view>
 
 namespace ctl
 {
@@ -27,7 +12,7 @@ namespace ctl
 
 	namespace literals::filesystem_literals
 	{
-	#ifndef CTL_FILESYSTEM_PATH_WIDE
+	#ifndef STDI_FILESYSTEM_PATH_WIDE
 		inline std::filesystem::path operator""_p(const char *str, std::size_t len) noexcept
 		{ return std::filesystem::path{std::string_view{str, len}}; }
 	#else

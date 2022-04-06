@@ -59,6 +59,13 @@ namespace gal
 		static get_nat_win_t get_nat_win;
 	}
 
+	namespace __font
+	{
+		CTL_NO_DECL_BEGIN
+		create_glyps_t create_glyph_set;
+		CTL_NO_DECL_END
+	}
+
 	namespace __private
 	{
 		GAL_SHARED_API window_backend GAL_SHARED_API_CALL get_win_backend() noexcept
@@ -217,7 +224,7 @@ namespace gal
 
 	GAL_SHARED_API bool GAL_SHARED_API_CALL gpu_supported(const pci &gpu) noexcept
 	{
-		ctl::unique_ptr<__win::impl> tmp{__win::create_impl(std::nullopt, 0, 0, 800, 600)};
+		ctl::unique_ptr<__win::impl> tmp{__win::create_impl(std::nullopt, {0, 0, 800, 600})};
 
 		switch(__rndr::backend) {
 			case render_backend::vulkan: {
@@ -255,6 +262,7 @@ namespace gal
 				__win::shutdown = xcb::shutdown;
 				__win::get_nat_win = xcb::get_native_window;
 				__win::get_nat_conn = xcb::get_native_connection;
+				__font::create_glyph_set = xcb::create_glyphs;
 				break;
 			}
 			default:

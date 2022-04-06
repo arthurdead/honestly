@@ -1,18 +1,18 @@
 #pragma once
 
-#include "version"
+#include <cpa/compiler_builtins.hpp>
 #include <stack>
 
 namespace ctl
 {
 	template <typename T, typename C = std::deque<T>>
-	class CTL_LOCAL_CLASS stack : public std::stack<T, C>
+	class CPA_LOCAL_CLASS stack : public std::stack<T, C>
 	{
-		using __base = std::stack<T, C>;
+		using base_type = std::stack<T, C>;
 
 	public:
 		void clear() noexcept;
 	};
 }
 
-#include "__private/stack.tpp"
+#include "__details/stack.tpp"

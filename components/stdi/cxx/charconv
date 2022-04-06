@@ -1,0 +1,15 @@
+#pragma once
+
+#include <cpa/compilers.h>
+
+#define __STDI_INCLUDE_NEXT_HEADER <charconv>
+#include "__details/include_next.h"
+
+#ifndef __STDI_CHARCONV_HPP
+	#include "version"
+
+	#if STDI_CXX_STDLIB == STDI_STDLIB_LIBCPP
+		#define STDI_CHARCONV_FLOAT_UNSUPPORTED
+	#endif
+#define __STDI_CHARCONV_HPP
+#endif

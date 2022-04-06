@@ -1,19 +1,17 @@
 #pragma once
 
-#include "version"
+#include <version>
 #include "type_traits"
 #include "cstddef"
-#include "charconv"
-#include "filesystem"
-#include "string"
+#include <string>
 #include <variant>
 #include <typeinfo>
 
 namespace ctl
 {
-	namespace __varnt
+	namespace __details_lit_var
 	{
-		using litbase_t = std::variant<
+		using lit_var_t = std::variant<
 			std::monostate,
 			bool,
 			int,
@@ -22,8 +20,10 @@ namespace ctl
 			unsigned long,
 			long long,
 			unsigned long long,
+		#ifdef __cpp_size_t_suffix
 			ssize_t,
 			std::size_t,
+		#endif
 			double,
 			long double,
 			float,
@@ -43,7 +43,7 @@ namespace ctl
 			std::wstring
 		>;
 
-		enum /*class*/ litindexs : std::size_t
+		enum /*class*/ lit_idxs : std::size_t
 		{
 			invalid,
 			bool_,
@@ -53,8 +53,10 @@ namespace ctl
 			unsigned_long,
 			long_long,
 			unsigned_long_long,
+		#ifdef __cpp_size_t_suffix
 			ssize_t_,
 			size_t_,
+		#endif
 			double_,
 			long_double,
 			float_,
@@ -75,7 +77,7 @@ namespace ctl
 			count,
 		};
 
-		static constexpr const std::initializer_list<const std::type_info *> litarr{
+		static constexpr const std::initializer_list<const std::type_info *> lit_types{
 			&typeid(bool),
 			&typeid(int),
 			&typeid(unsigned int),
@@ -83,8 +85,10 @@ namespace ctl
 			&typeid(unsigned long),
 			&typeid(long long),
 			&typeid(unsigned long long),
+		#ifdef __cpp_size_t_suffix
 			&typeid(ssize_t),
 			&typeid(std::size_t),
+		#endif
 			&typeid(double),
 			&typeid(long double),
 			&typeid(float),
@@ -105,37 +109,37 @@ namespace ctl
 		};
 	}
 
-	class CTL_LOCAL_CLASS literal_variant : private __varnt::litbase_t
+	class CPA_LOCAL_CLASS literal_variant : private __details_lit_var::lit_var_t
 	{
-		using __base = __varnt::litbase_t;
+		using base_type = __details_lit_var::lit_var_t;
 
 	public:
-		using indexes = __varnt::litindexs;
+		using indexes = __details_lit_var::litindexs;
 
-		using __base::variant;
-		using __base::operator=;
-		using __base::emplace;
+		using base_type::variant;
+		using base_type::operator=;
+		using base_type::emplace;
 
 		constexpr inline bool operator==(const literal_variant &other) const noexcept
-		{ return (std::operator==(static_cast<const __base &>(*this), static_cast<const __base &>(other))); }
+		{ return (std::operator==(static_cast<const base_type &>(*this), static_cast<const base_type &>(other))); }
 		constexpr inline bool operator!=(const literal_variant &other) const noexcept
-		{ return (std::operator!=(static_cast<const __base &>(*this), static_cast<const __base &>(other))); }
+		{ return (std::operator!=(static_cast<const base_type &>(*this), static_cast<const base_type &>(other))); }
 
 		inline literal_variant(std::string_view str) noexcept
-		{ __base::emplace<indexes::string>(str); }
+		{ base_type::emplace<indexes::string>(str); }
 	#ifdef __cpp_char8_t
 		inline literal_variant(std::u8string_view str) noexcept
-		{ __base::emplace<indexes::u8string>(str); }
+		{ base_type::emplace<indexes::u8string>(str); }
 	#endif
 		inline literal_variant(std::u16string_view str) noexcept
-		{ __base::emplace<indexes::u16string>(str); }
+		{ base_type::emplace<indexes::u16string>(str); }
 		inline literal_variant(std::u32string_view str) noexcept
-		{ __base::emplace<indexes::u32string>(str); }
+		{ base_type::emplace<indexes::u32string>(str); }
 		inline literal_variant(std::wstring_view str) noexcept
-		{ __base::emplace<indexes::wstring>(str); }
+		{ base_type::emplace<indexes::wstring>(str); }
 
 		inline void clear() noexcept
-		{ __base::emplace<indexes::invalid>(); }
+		{ base_type::emplace<indexes::invalid>(); }
 
 		template <typename T>
 		inline explicit operator T() const noexcept
@@ -148,7 +152,7 @@ namespace ctl
 		{ return (index() == indexes::invalid); }
 
 		constexpr inline indexes index() const noexcept
-		{ return static_cast<indexes>(__base::index()); }
+		{ return static_cast<indexes>(base_type::index()); }
 
 		template <typename T>
 	#ifdef __cpp_lib_constexpr_typeinfo
@@ -161,7 +165,7 @@ namespace ctl
 
 			std::size_t i{static_cast<std::size_t>(indexes::bool_)};
 
-			for(const std::type_info *it : __varnt::litarr) {
+			for(const std::type_info *it : __details_lit_var::lit_types) {
 				if((*it) == inf) {
 					return static_cast<indexes>(i);
 				}
@@ -177,4 +181,4 @@ namespace ctl
 	};
 }
 
-#include "__private/variant.tpp"
+#include "__details/variant.tpp"

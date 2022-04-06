@@ -39,8 +39,8 @@ namespace ctl
 	{ return std::u8string{type_cast<std::u8string_view>(value)}; }
 #endif
 
-#if CTL_LIBCPP == CTL_LIBCPP_LIBCPP
-	#if __CTL_WCHAR_WIDTH == 32
+#ifdef STDI_UCHAR_MB_UNSUPPORTED
+	#if CPA_WCHAR_WIDTH == 32
 	template <>
 	CTL_SHARED_API char32_t CTL_SHARED_API_CALL to_char<char32_t>(std::string_view value) noexcept
 	{ return static_cast<char32_t>(to_char<wchar_t>(value)); }
@@ -62,7 +62,7 @@ namespace ctl
 	template <>
 	CTL_SHARED_API char16_t CTL_SHARED_API_CALL to_char<char16_t>([[maybe_unused]] std::string_view value) noexcept
 	{ CTL_DEBUGTRAP; return char16_t{}; }
-	#elif __CTL_WCHAR_WIDTH == 16
+	#elif CPA_WCHAR_WIDTH == 16
 	template <>
 	CTL_SHARED_API char16_t CTL_SHARED_API_CALL to_char<char16_t>(std::string_view value) noexcept
 	{ return static_cast<char16_t>(to_char<wchar_t>(value)); }

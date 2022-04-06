@@ -1,8 +1,12 @@
 artifacts/
 **/*.gen.*
 .build_ipc
-test/bin/
-test/*.elf
-test/*.log
+test/
 workspace/sublime-text/*.sublime-workspace
 thirdparty/zsh/git/
+backup*/
+build_test.sh
+build.sh
+build_ipc.sh
+
+components/*/**/private_impl/location.hpp

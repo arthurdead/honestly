@@ -5,17 +5,13 @@
 #include "connection.hpp"
 #include "screen.hpp"
 #include "event.hpp"
+#include "glyph_set.hpp"
 #include "xcb.hpp"
 #include <unordered_map>
 #include <gal/window.hpp>
 #if CTL_DEBUG_LEVEL > 0
 	#include <osal/terminal.hpp>
 #endif
-
-
-#include <gal/font.hpp>
-#include "../font.hpp"
-#include "font.hpp"
 
 namespace gal::xcb
 {
@@ -59,26 +55,9 @@ namespace gal::xcb
 		using namespace std::literals::string_view_literals;
 
 		osal::this_terminal::info("num screens = "sv, __private::conn->num_screens(), '\n');
-
 		osal::this_terminal::info("current screen = "sv, __private::conn->screen_number(),'\n');
-
-		osal::this_terminal::info("num desktops = "sv, __private::conn->num_desktops(), '\n');
-
 		osal::this_terminal::info("screen pix = "sv, (*__private::scrn).width_in_pixels,'x',(*__private::scrn).height_in_pixels, '\n');
-
 		osal::this_terminal::info("screen mil = "sv, (*__private::scrn).width_in_millimeters, 'x',(*__private::scrn).height_in_millimeters,'\n');
-
-		osal::this_terminal::info("current desktop = "sv, __private::conn->current_desktop(),'\n');
-
-		dimension desktop_size{__private::conn->desktop_size()};
-		osal::this_terminal::info("desktop size = "sv, desktop_size.width, 'x',desktop_size.height,'\n');
-
-		osal::this_terminal::info("desktop names:\n"sv);
-		const std::vector<std::string> names{__private::conn->desktop_names()};
-		for(const std::string &name : names) {
-			osal::this_terminal::info("  "sv, name, '\n');
-		}
-
 		osal::this_terminal::info("monitors:\n"sv);
 		const std::vector<monitor_info> mons{__private::scrn.monitors()};
 		for(const monitor_info &info : mons) {
@@ -87,16 +66,24 @@ namespace gal::xcb
 			osal::this_terminal::info("    "sv, info.primary, '\n');
 		}
 
-		osal::this_terminal::info("work areas:\n"sv);
-		const std::vector<monitor_dimension> areas{__private::conn->work_areas()};
-		for(const monitor_dimension &area : areas) {
-			osal::this_terminal::info("    "sv, area.x, 'x', area.y,'x',area.width, 'x',area.height,'\n');
+		osal::this_terminal::info("num desktops = "sv, __private::conn->num_desktops(), '\n');
+		osal::this_terminal::info("current desktop = "sv, __private::conn->current_desktop(),'\n');
+		osal::this_terminal::info("desktop names:\n"sv);
+		const std::vector<std::string> names{__private::conn->desktop_names()};
+		for(const std::string &name : names) {
+			osal::this_terminal::info("  "sv, name, '\n');
 		}
-
+		dimension desktop_size{__private::conn->desktop_size()};
+		osal::this_terminal::info("desktop size = "sv, desktop_size.width, 'x',desktop_size.height,'\n');
 		osal::this_terminal::info("viewports:\n"sv);
 		const std::vector<absolute_point> viewports{__private::conn->desktops_viewport()};
 		for(const absolute_point &viewport : viewports) {
 			osal::this_terminal::info("    "sv, viewport.x, 'x', viewport.y,'\n');
+		}
+		osal::this_terminal::info("work areas:\n"sv);
+		const std::vector<monitor_dimension> areas{__private::conn->work_areas()};
+		for(const monitor_dimension &area : areas) {
+			osal::this_terminal::info("    "sv, area.x, 'x', area.y,'x',area.width, 'x',area.height,'\n');
 		}
 	#endif
 	}
@@ -115,7 +102,7 @@ namespace gal::xcb
 		__private::user_window_map.clear();
 	}
 
-	GAL_XCB_SHARED_API __win::impl * GAL_XCB_SHARED_API_CALL create_window(ctl::optional_ref<gal::window> usr_win, std::size_t x, std::size_t y, std::size_t w, std::size_t h) noexcept
+	GAL_XCB_SHARED_API __win::impl * GAL_XCB_SHARED_API_CALL create_window(ctl::optional_ref<gal::window> usr_win, absolute_rectangle rect) noexcept
 	{
 		using namespace std::literals::string_view_literals;
 
@@ -126,20 +113,20 @@ namespace gal::xcb
 
 		const monitor_dimension &area{__private::work_areas[desk]};
 
-		if(w == ~0u) {
-			w = __private::mon.width;
+		if(rect.width == ~0u) {
+			rect.width = __private::mon.width;
 		}
-		if(h == ~0u) {
-			h = area.height;
+		if(rect.height == ~0u) {
+			rect.height = area.height;
 		}
-		if(x == ~0u) {
-			x = __private::mon.x + ((__private::mon.width / 2) - (w / 2));
+		if(rect.x == ~0u) {
+			rect.x = __private::mon.x + ((__private::mon.width / 2) - (rect.width / 2));
 		}
-		if(y == ~0u) {
-			y = __private::mon.y + ((area.height / 2) - (h / 2));
+		if(rect.y == ~0u) {
+			rect.y = __private::mon.y + ((area.height / 2) - (rect.height / 2));
 		}
 
-		window *xcb_win{new window{conn, scrn, x, y, w, h}};
+		window *xcb_win{new window{conn, scrn, rect}};
 
 		std::string winname{"gal_window_"sv};
 		winname += ctl::to_string(xcb_win->native());
@@ -161,11 +148,16 @@ namespace gal::xcb
 			xcb_win->unmap();
 		}
 
-		xcb_win->move(x, y);
+		xcb_win->move(rect.x, rect.y);
 
 		conn.flush();
 
 		return static_cast<__win::impl *>(xcb_win);
+	}
+
+	GAL_XCB_SHARED_API __font::glyphs_impl * GAL_XCB_SHARED_API_CALL create_glyphs(__font::impl &font, const __font::shape_impl &shape) noexcept
+	{
+		return static_cast<__font::glyphs_impl *>(new glyph_set{*__private::conn, font, shape});
 	}
 
 	GAL_XCB_SHARED_API void GAL_XCB_SHARED_API_CALL upkeep() noexcept
@@ -200,24 +192,16 @@ namespace gal::xcb
 						__private::user_window_map_t::iterator it{__private::user_window_map.find(ptr)};
 						if(it != __private::user_window_map.end()) {
 							it->second->draw();
-
-							
 						}
 					}
 					break;
 				}
 				case XCB_DESTROY_NOTIFY: {
-					CTL_DEBUGTRAP;
-					/*destroy_notify_event event{base_event};
+					destroy_notify_event event{base_event};
 					ctl::optional_ref<window> win{event.window()};
 					if(win) {
-						window *ptr{&(*win)};
-						__private::user_window_map_t::iterator it{__private::user_window_map.find(ptr)};
-						if(it != __private::user_window_map.end()) {
-							delete it->second;
-							__private::user_window_map.erase(ptr);
-						}
-					}*/
+						CTL_DEBUGTRAP;
+					}
 					break;
 				}
 				case XCB_CLIENT_MESSAGE: {
